@@ -1,8 +1,13 @@
 from django.urls import path
-from main.views import show_main
+from main.views import show_home_page, show_welcome_page
+from main.views import register, login_user, logout_user
 
 app_name = 'main'
 
 urlpatterns = [
-    path('', show_main, name='show_main'),
+    path('', show_home_page, name='show_home_page'),
+    path('welcome/', show_welcome_page, name='show_welcome_page'),
+    path('register/', register, name='register'),
+    path('login/', login_user, name='login_user'),
+    path('logout/', logout_user, name='logout_user'),
 ]
