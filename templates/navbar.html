@@ -1,9 +1,26 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block content %}
-<nav class="navbar bg-body-tertiary">
-    <form class="container-fluid justify-content-start">
-      <button class="btn btn-outline-success me-2" type="button">Main button</button>
-      <button class="btn btn-sm btn-outline-secondary" type="button">Smaller button</button>
-    </form>
-  </nav>
+<nav class="navbar navbar-expand-lg navbar-light bg-light p-3">
+  <div class="container-fluid">
+  <!-- Bootstrap navbar classes --> 
+      <a href="" class="navbar-brand">
+        <img src="{% static 'images/sijarta.svg' %}" height="36" alt="Sijarta">
+      </a>
+      <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+          <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarCollapse">
+          <div class="navbar-nav">
+              <a href="" class="nav-item nav-link active">Home</a>
+              <a href="" class="nav-item nav-link">MyPay</a>
+              <a href="" class="nav-item nav-link">Kelola Pesanan Saya</a>
+              <a href="" class="nav-item nav-link">Diskon</a>
+          </div>
+          <div class="navbar-nav ms-auto">
+              <a href="#" class="nav-item nav-link">Login</a>
+          </div>
+      </div>
+  </div>
+</nav>
 {% endblock %}
