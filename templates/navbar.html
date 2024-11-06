@@ -12,15 +12,40 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarCollapse">
           <div class="navbar-nav">
-              <a href="" class="nav-item nav-link active">Home</a>
-              <a href="" class="nav-item nav-link">MyPay</a>
-              <a href="" class="nav-item nav-link">Kelola Pesanan Saya</a>
-              <a href="" class="nav-item nav-link">Diskon</a>
+              {% if user.is_authenticated %}
+                  <a href="" class="nav-item nav-link active">Home</a>
+                  <a href="" class="nav-item nav-link">MyPay</a>
+                  <a href="" class="nav-item nav-link">Kelola Pesanan Saya</a>
+                  <a href="" class="nav-item nav-link">Diskon</a>
+              {% endif %}
           </div>
           <div class="navbar-nav ms-auto">
-              <a href="#" class="nav-item nav-link">Login</a>
+              {% if user.is_authenticated %}
+                  <a href="{% url 'main:logout' %}" class="nav-item nav-link">Logout</a>
+              {% else %}
+                  <a href="{% url 'main:login_user' %}" class="nav-item nav-link">Login</a>
+                  <a href="{% url 'main:register' %}" class="nav-item nav-link custom-register-btn custom-gap">Register</a>
+              {% endif %}
           </div>
       </div>
   </div>
 </nav>
+<style>
+  .custom-gap {
+    margin-left: 0.5rem;
+  }
+  .custom-register-btn {
+    background-color: #177E89; /* Initial background color */
+    color: white; /* Text color */
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    text-align: center;
+    transition: background-color 0.3s ease; /* Smooth transition */
+  }
+
+  .custom-register-btn:hover {
+      background-color: #084c61; /* Hover background color */
+      color: white; /* Text color stays white */
+  }
+  </style>
 {% endblock %}
