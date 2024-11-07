@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyPay - Saldo dan Riwayat Transaksi</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <h1>Saldo MyPay</h1>
+    <p><strong>Saldo Saat Ini:</strong> Rp {{ user.mypay_saldo }}</p>
+
+    <h2>Riwayat Transaksi</h2>
+    <table>
+        <tr>
+            <th>ID Transaksi</th>
+            <th>Jenis Transaksi</th>
+            <th>Jumlah</th>
+            <th>Tanggal</th>
+        </tr>
+        {% for transaction in transactions %}
+        <tr>
+            <td>{{ transaction.id_transaksi }}</td>
+            <td>{{ transaction.transaction_type }}</td>
+            <td>Rp {{ transaction.amount }}</td>
+            <td>{{ transaction.date }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <button onclick="location.href='{% url 'transaksi_mypay' %}'">Top Up / Transaksi Baru</button>
+</body>
+</html>

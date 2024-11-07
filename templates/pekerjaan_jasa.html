@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pekerjaan Jasa - Daftar Pekerjaan</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <h1>Daftar Pekerjaan Tersedia</h1>
+    <form method="get">
+        <label for="category">Filter Kategori Jasa:</label>
+        <select name="category" id="category">
+            <option value="">Semua</option>
+            {% for category in categories %}
+            <option value="{{ category.id }}">{{ category.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filter</button>
+    </form>
+
+    <table>
+        <tr>
+            <th>ID Pekerjaan</th>
+            <th>Kategori</th>
+            <th>Kamar</th>
+            <th>Pelanggan</th>
+            <th>Aksi</th>
+        </tr>
+        {% for job in jobs %}
+        <tr>
+            <td>{{ job.id_job }}</td>
+            <td>{{ job.category.name }}</td>
+            <td>{{ job.room.no_kamar }}</td>
+            <td>{{ job.guest.nama }}</td>
+            <td>
+                <form action="{% url 'ambil_pekerjaan' job.id_job %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit">Kerjakan</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

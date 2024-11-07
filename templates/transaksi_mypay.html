@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaksi MyPay - Buat Transaksi Baru</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <h1>Transaksi MyPay</h1>
+    <form method="post">
+        {% csrf_token %}
+        <label for="transaction_type">Jenis Transaksi:</label>
+        <select name="transaction_type" id="transaction_type" required>
+            <option value="top_up">Top Up</option>
+            <option value="payment">Pembayaran Jasa</option>
+            <option value="transfer">Transfer</option>
+            <option value="withdrawal">Penarikan</option>
+        </select><br><br>
+
+        <label for="amount">Jumlah:</label>
+        <input type="number" name="amount" id="amount" required><br><br>
+
+        <!-- Field khusus untuk Transfer -->
+        <div id="transfer_info" style="display: none;">
+            <label for="destination_phone">No. HP Tujuan (untuk Transfer):</label>
+            <input type="text" name="destination_phone" id="destination_phone"><br><br>
+        </div>
+
+        <!-- Field khusus untuk Withdrawal -->
+        <div id="withdrawal_info" style="display: none;">
+            <label for="bank_account">No. Rekening Bank (untuk Penarikan):</label>
+            <input type="text" name="bank_account" id="bank_account"><br><br>
+        </div>
+
+        <button type="submit">Submit Transaksi</button>
+    </form>
+
+    <script>
+        const transactionType = document.getElementById('transaction_type');
+        transactionType.addEventListener('change', function() {
+            document.getElementById('transfer_info').style.display = transactionType.value === 'transfer' ? 'block' : 'none';
+            document.getElementById('withdrawal_info').style.display = transactionType.value === 'withdrawal' ? 'block' : 'none';
+        });
+    </script>
+</body>
+</html>

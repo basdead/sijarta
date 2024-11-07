@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status Pekerjaan Jasa</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <h1>Status Pekerjaan Jasa</h1>
+    <table>
+        <tr>
+            <th>ID Pekerjaan</th>
+            <th>Kategori</th>
+            <th>Status Saat Ini</th>
+            <th>Update Status</th>
+        </tr>
+        {% for job_status in job_statuses %}
+        <tr>
+            <td>{{ job_status.job.id_job }}</td>
+            <td>{{ job_status.job.category.name }}</td>
+            <td>{{ job_status.status }}</td>
+            <td>
+                <form action="{% url 'update_status_pekerjaan' job_status.job.id_job %}" method="post">
+                    {% csrf_token %}
+                    <select name="status">
+                        <option value="menunggu" {% if job_status.status == 'menunggu' %}selected{% endif %}>Menunggu Pekerja Berangkat</option>
+                        <option value="tiba" {% if job_status.status == 'tiba' %}selected{% endif %}>Pekerja Tiba di Lokasi</option>
+                        <option value="dilakukan" {% if job_status.status == 'dilakukan' %}selected{% endif %}>Pelayanan Jasa Sedang Dilakukan</option>
+                        <option value="selesai" {% if job_status.status == 'selesai' %}selected{% endif %}>Pesanan Selesai</option>
+                    </select>
+                    <button type="submit">Update</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
