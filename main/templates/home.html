@@ -11,12 +11,17 @@
         <h5>by basdead</h5>
     </div>
     <div class="buttons">
-        <a href="{% url 'main:login_user' %}" class="nav-item nav-link custom-home-btn custom-login-btn">Login</a>
-        <a href="javascript:void(0);" onclick="openModal()" class="nav-item nav-link custom-home-btn custom-register-btn custom-gap">Register</a>
+        {% if user.is_authenticated %}
+            <a href="{% url 'main:show_home_page' %}" class="nav-item nav-link custom-home-btn custom-dashboard-btn">Dashboard</a>
+        {% else %}
+            <a href="javascript:void(0);" onclick="openModal('loginModal')" class="nav-item nav-link custom-home-btn custom-login-btn">Login</a>
+            <a href="javascript:void(0);" onclick="openModal('registerModal')" class="nav-item nav-link custom-home-btn custom-register-btn custom-gap">Register</a>
+        {% endif %}
     </div>
 </div>
 
 {% include 'register.html' %}
+{% include 'login.html' %}
 
 <style>
   .home-content {
@@ -44,13 +49,6 @@
     color: white; /* Text color */
     padding: 0.5rem 1rem;
     border-radius: 0.25rem;
-    text-align: center;
-    transition: background-color 0.3s ease; /* Smooth transition */
-  }
-
-  .custom-register-btn:hover {
-      background-color: #084c61; /* Hover background color */
-      color: white; /* Text color stays white */
   }
 
   .custom-login-btn {
@@ -58,26 +56,44 @@
     color: white; /* Text color */
     padding: 0.5rem 1rem;
     border-radius: 0.25rem;
-    text-align: center;
-    transition: background-color 0.3s ease; /* Smooth transition */
   }
 
-  .custom-login-btn:hover {
-      background-color: #c9e2e5; /* Hover background color */
-      color: #177E89; /* Text color stays white */
+  .custom-logout-btn {
+    background-color: #d9534f; /* Initial background color */
+    color: white; /* Text color */
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
   }
 
-  .navbar-nav .nav-link {
-    font-family: 'Inter', sans-serif;
+  .custom-dashboard-btn {
+    background-color: #5bc0de; /* Initial background color */
+    color: white; /* Text color */
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
   }
 
-  .custom-login-link {
-    color: #323031;
-  }
-
-  .custom-login-link:hover {
-    color: #177E89;
+  .custom-register-btn:hover, .custom-login-btn:hover, .custom-logout-btn:hover, .custom-dashboard-btn:hover {
+    background-color: #084c61; /* Hover background color */
+    color: white; /* Text color stays white */
   }
 </style>
 
-{% endblock %}
+<script>
+    function openModal(modalId) {
+        var modal = document.getElementById(modalId);
+        modal.style.display = "block";
+    }
+
+    window.onclick = function(event) {
+        var registerModal = document.getElementById("registerModal");
+        var loginModal = document.getElementById("loginModal");
+        if (event.target == registerModal) {
+            registerModal.style.display = "none";
+        }
+        if (event.target == loginModal) {
+            loginModal.style.display = "none";
+        }
+    }
+</script>
+
+{% endblock content %}

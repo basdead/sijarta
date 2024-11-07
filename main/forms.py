@@ -13,11 +13,11 @@ class RegisterForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ('username', 'password1', 'password2', 'nama', 'pwd', 'jenis_kelamin', 'no_hp', 'tgl_lahir', 'alamat')
+        fields = ( 'nama', 'pwd', 'jenis_kelamin', 'no_hp', 'tgl_lahir', 'alamat')
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.set_password(self.cleaned_data['pwd'])  # Set the custom password field
+        user.set_nama(self.cleaned_data['nama'])  # Set the custom password field
         if commit:
             user.save()
             Pengguna.objects.create(
