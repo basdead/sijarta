@@ -10,17 +10,13 @@ from .forms import RegisterForm
 def show_home_page(request):
     return render(request, 'home.html')
 
-
-@login_required(login_url='/login')
-def show_welcome_page(request):
-    return render(request, "welcome.html")
-
 def register(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('login_user')
+            user = form.save()
+            login(request, user)  # Log in the user
+            return redirect('main:show_home_page')  # Redirect to the home page or any other page
     else:
         form = RegisterForm()
     return render(request, 'register.html', {'form': form})
