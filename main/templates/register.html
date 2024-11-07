@@ -2,53 +2,75 @@
 {% block meta %}
     <title>Register</title>
     <style>
-        .center-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 80vh;
-        }
-        .register {
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
             width: 100%;
-            max-width: 400px;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
             padding: 20px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            background: #fff;
-            margin-top: -50px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
         }
-        table {
-            width: 100%;
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
         }
-        .staatliches-regular {
-            font-family: "Staatliches", sans-serif;
-            font-weight: 400;
-            font-style: normal;
-            font-size: xx-large;
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
         }
     </style>
 {% endblock meta %}
-{% block content %}  
-{% include 'navbar.html' %}
-<div class="center-container"> 
-    <div class="register">
-        <h1 class="staatliches-regular">Register</h1>  
-        <form method="POST" >  
-            {% csrf_token %}  
-            <table>  
-                {{ form.as_table }}  
-                <tr>  
-                    <td></td>
-                    <td><input class="btn btn-danger" type="submit button" name="submit" value="Daftar"/></td>  
-                </tr>  
-            </table>  
+{% block content %}
+<div id="registerModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h1 class="staatliches-regular">Register</h1>
+        <form method="POST" action="{% url 'main:register' %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Register</button>
         </form>
-    {% if messages %}  
-        <ul>   
-            {% for message in messages %}  
-                <li>{{ message }}</li>  
-                {% endfor %}  
-        </ul>   
-    {% endif %}
+        {% if messages %}
+            <ul>
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
     </div>
 </div>
+<script>
+    var modal = document.getElementById("registerModal");
+    var span = document.getElementsByClassName("close")[0];
+
+    function openModal() {
+        modal.style.display = "block";
+    }
+
+    span.onclick = function() {
+        modal.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>
 {% endblock content %}

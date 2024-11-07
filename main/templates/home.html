@@ -1,8 +1,83 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block content %}
 
 {% include 'navbar.html' %}
 
-<h1>Sijarta</h1>
+<!-- Homepage dibedakan 2: Sebelum dan sesudah login -->
+<div class="home-content">
+    <div class="title">
+        <img src="{% static 'images/sijarta.svg' %}" alt="Sijarta" height="120">
+        <h5>by basdead</h5>
+    </div>
+    <div class="buttons">
+        <a href="{% url 'main:login_user' %}" class="nav-item nav-link custom-home-btn custom-login-btn">Login</a>
+        <a href="javascript:void(0);" onclick="openModal()" class="nav-item nav-link custom-home-btn custom-register-btn custom-gap">Register</a>
+    </div>
+</div>
+
+{% include 'register.html' %}
+
+<style>
+  .home-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Full viewport height */
+    text-align: center;
+    gap: 2.5rem; /* Space between elements */
+  }
+
+  .buttons {
+    display: flex;
+    flex-direction: row; /* Align items horizontally */
+    gap: 0.5rem; /* Space between buttons */
+  }
+
+  .custom-home-btn {
+    width: 150px; /* Fixed width for home page buttons */
+  }
+
+  .custom-register-btn {
+    background-color: #177E89; /* Initial background color */
+    color: white; /* Text color */
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    text-align: center;
+    transition: background-color 0.3s ease; /* Smooth transition */
+  }
+
+  .custom-register-btn:hover {
+      background-color: #084c61; /* Hover background color */
+      color: white; /* Text color stays white */
+  }
+
+  .custom-login-btn {
+    background-color: #85afb3; /* Initial background color */
+    color: white; /* Text color */
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    text-align: center;
+    transition: background-color 0.3s ease; /* Smooth transition */
+  }
+
+  .custom-login-btn:hover {
+      background-color: #c9e2e5; /* Hover background color */
+      color: #177E89; /* Text color stays white */
+  }
+
+  .navbar-nav .nav-link {
+    font-family: 'Inter', sans-serif;
+  }
+
+  .custom-login-link {
+    color: #323031;
+  }
+
+  .custom-login-link:hover {
+    color: #177E89;
+  }
+</style>
 
 {% endblock %}
