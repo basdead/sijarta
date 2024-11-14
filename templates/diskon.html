@@ -3,27 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diskon - Voucher & Promo</title>
+    <title>Diskon - Vouchers & Promos</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
-    <h1>Diskon - Voucher & Promo</h1>
-    
-    <h2>Available Vouchers</h2>
+    <h1>Diskon</h1>
+    <h2>Vouchers</h2>
     <table>
         <tr>
-            <th>Code</th>
-            <th>Description</th>
-            <th>Discount Amount</th>
-            <th>Price</th>
-            <th>Action</th>
+            <th>Nama</th>
+            <th>Deskripsi</th>
+            <th>Harga</th>
+            <th>Aksi</th>
         </tr>
         {% for voucher in vouchers %}
         <tr>
-            <td>{{ voucher.code }}</td>
-            <td>{{ voucher.description }}</td>
-            <td>Rp {{ voucher.discount_amount }}</td>
-            <td>Rp {{ voucher.price }}</td>
+            <td>{{ voucher.nama }}</td>
+            <td>{{ voucher.deskripsi }}</td>
+            <td>Rp {{ voucher.harga }}</td>
             <td>
                 <form action="{% url 'beli_voucher' voucher.id %}" method="post">
                     {% csrf_token %}
@@ -33,32 +30,28 @@
         </tr>
         {% endfor %}
     </table>
-    
-    <h2>Current Promos</h2>
+
+    <h2>Promos</h2>
     <table>
         <tr>
-            <th>Title</th>
-            <th>Description</th>
-            <th>Discount (%)</th>
-            <th>Valid Until</th>
+            <th>Nama</th>
+            <th>Deskripsi</th>
         </tr>
         {% for promo in promos %}
         <tr>
-            <td>{{ promo.title }}</td>
-            <td>{{ promo.description }}</td>
-            <td>{{ promo.discount_percentage }}%</td>
-            <td>{{ promo.valid_until }}</td>
+            <td>{{ promo.nama }}</td>
+            <td>{{ promo.deskripsi }}</td>
         </tr>
         {% endfor %}
     </table>
 
-    <!-- Display success or error messages -->
+    <!-- Display messages -->
     {% if messages %}
-        <div>
-            {% for message in messages %}
-                <p class="{{ message.tags }}">{{ message }}</p>
-            {% endfor %}
-        </div>
+    <div id="messages">
+        {% for message in messages %}
+        <p class="{% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</p>
+        {% endfor %}
+    </div>
     {% endif %}
 </body>
 </html>

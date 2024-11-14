@@ -1,29 +1,26 @@
+# views.py
 from django.shortcuts import render, redirect
+from .models import Voucher, Promo, Pengguna
 from django.contrib import messages
-from .models import Voucher, Promo
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
 
-@login_required
 def diskon_view(request):
-    vouchers = Voucher.objects.filter(is_active=True)
-    promos = Promo.objects.filter(is_active=True)
-    return render(request, 'diskon/diskon.html', {'vouchers': vouchers, 'promos': promos})
+    vouchers = Voucher.objects.all()
+    promos = Promo.objects.all()
+    return render(request, 'diskon.html', {'vouchers': vouchers, 'promos': promos})
 
-@login_required
 def beli_voucher_view(request, voucher_id):
+    # Ensure that user is logged in
+    pengguna = Pengguna.objects.get(user=request.user)
     voucher = Voucher.objects.get(id=voucher_id)
-    user_profile = request.user.profile  # Assuming UserProfile is set up with a balance field
 
-    if user_profile.balance >= voucher.price:
-        # Deduct the voucher price from the user's balance
-        user_profile.balance -= voucher.price
-        user_profile.save()
+    # Check if user has enough balance
+    if pengguna.saldo >= voucher.harga:
+        # Deduct voucher price from user balance
+        pengguna.saldo -= voucher.harga
+        pengguna.save()
         
-        # Display success message
-        messages.success(request, f"Voucher {voucher.code} successfully purchased!")
+        messages.success(request, f"Voucher {voucher.nama} berhasil dibeli!")
+        return redirect('diskon')
     else:
-        # Display error message if balance is insufficient
-        messages.error(request, "Insufficient balance to purchase this voucher.")
-    
-    return redirect('diskon')
+        messages.error(request, "Saldo tidak cukup untuk membeli voucher ini.")
+        return redirect('diskon')

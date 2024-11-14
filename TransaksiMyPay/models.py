@@ -1,5 +1,5 @@
 from django.db import models
-from MyPay.models import Guest  # Mengimpor Guest dari aplikasi MyPay
+from django.contrib.auth.models import User  # Assuming you're using the default User model
 
 class MyPayTransaction(models.Model):
     TRANSACTION_TYPES = [
@@ -10,7 +10,7 @@ class MyPayTransaction(models.Model):
     ]
 
     id_transaksi = models.CharField(max_length=10, primary_key=True)
-    guest = models.ForeignKey(Guest, on_delete=models.CASCADE)
+    guest = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transaksimypay')  # Relate to User
     transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     destination_phone = models.CharField(max_length=15, blank=True, null=True)  # Only for transfers
