@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'TransaksiMyPay',
     'PekerjaanJasa',
     'StatusPekerjaanJasa',
+    'Diskon',
 ]
 
 MIDDLEWARE = [

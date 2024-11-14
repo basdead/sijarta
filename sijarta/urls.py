@@ -24,4 +24,6 @@ urlpatterns = [
     path('transaksi/', include('TransaksiMyPay.urls')),  # Rute untuk transaksi MyPay baru
     path('pekerjaan/', include('PekerjaanJasa.urls')),  # Rute untuk daftar pekerjaan jasa
     path('status/', include('StatusPekerjaanJasa.urls')),  # Rute untuk status pekerjaan jasa
+    path('diskon/', include('Diskon.urls')),  # Add route for Diskon
+
 ]
