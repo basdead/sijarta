@@ -1,8 +1,9 @@
 from django.contrib import admin
-from .models import MyPayTransaction
+from PekerjaanJasa.models import MyPayTransaction
+
 
 @admin.register(MyPayTransaction)
 class MyPayTransactionAdmin(admin.ModelAdmin):
-    list_display = ('id_transaksi', 'guest', 'transaction_type', 'amount', 'date')
-    list_filter = ('transaction_type', 'date')
-    search_fields = ('guest__nama', 'id_transaksi')
+    list_display = ('id', 'transaction_type', 'user', 'amount', 'date')  # Pastikan id dan date ada di model
+    list_filter = ('transaction_type', 'date')  # Pastikan field date ada
+    search_fields = ('transaction_type', 'user__nama')

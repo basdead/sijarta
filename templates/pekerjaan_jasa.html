@@ -1,47 +1,27 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pekerjaan Jasa - Daftar Pekerjaan</title>
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-</head>
-<body>
-    <h1>Daftar Pekerjaan Tersedia</h1>
-    <form method="get">
-        <label for="category">Filter Kategori Jasa:</label>
-        <select name="category" id="category">
-            <option value="">Semua</option>
-            {% for category in categories %}
-            <option value="{{ category.id }}">{{ category.name }}</option>
-            {% endfor %}
-        </select>
-        <button type="submit">Filter</button>
-    </form>
+<!-- pekerjaanjasa/pekerjaan_jasa.html -->
 
-    <table>
-        <tr>
-            <th>ID Pekerjaan</th>
-            <th>Kategori</th>
-            <th>Kamar</th>
-            <th>Pelanggan</th>
-            <th>Aksi</th>
-        </tr>
-        {% for job in jobs %}
-        <tr>
-            <td>{{ job.id_job }}</td>
-            <td>{{ job.category.name }}</td>
-            <td>{{ job.room.no_kamar }}</td>
-            <td>{{ job.guest.nama }}</td>
-            <td>
-                <form action="{% url 'ambil_pekerjaan' job.id_job %}" method="post">
-                    {% csrf_token %}
-                    <button type="submit">Kerjakan</button>
-                </form>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-</body>
-</html>
+<!-- Form Filter -->
+<form method="GET" action="{% url 'pekerjaan_jasa' %}">
+    <div>
+        <label for="kategori_jasa">Pilih Kategori:</label>
+        {{ form.kategori_jasa }}
+    </div>
+    <div>
+        <label for="subkategori_jasa">Pilih Subkategori:</label>
+        {{ form.subkategori_jasa }}
+    </div>
+    <button type="submit">Filter</button>
+</form>
+
+<!-- Daftar Pesanan -->
+<h2>Daftar Pesanan</h2>
+{% if pesanan_jasa %}
+    {% for pesanan in pesanan_jasa %}
+        <div>
+            <h3>{{ pesanan.id_job }} - {{ pesanan.category.name }} - {{ pesanan.subcategory.name }}</h3>
+            <button type="button" onclick="window.location.href='{% url 'kerjakan_pesanan' pesanan.id_job %}'">Kerjakan Pesanan</button>
+        </div>
+    {% endfor %}
+{% else %}
+    <p>Tidak ada pesanan yang ditemukan.</p>
+{% endif %}

@@ -1,21 +1,20 @@
 from django.db import models
-from MyPay.models import Guest  # Mengimpor Guest dari aplikasi MyPay
+from MyPay.models import Guest
+from PekerjaanJasa.models import Job
 
 class MyPayTransaction(models.Model):
-    TRANSACTION_TYPES = [
-        ('top_up', 'Top Up'),
-        ('payment', 'Pembayaran Jasa'),
-        ('transfer', 'Transfer'),
-        ('withdrawal', 'Penarikan'),
-    ]
-
-    id_transaksi = models.CharField(max_length=10, primary_key=True)
-    guest = models.ForeignKey(Guest, on_delete=models.CASCADE)
-    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
+    guest = models.ForeignKey(Guest, on_delete=models.CASCADE, related_name='mypay_transactions_transaksi')  # related_name ditambahkan
+    transaction_type = models.CharField(max_length=20, choices=[
+        ('TopUp', 'TopUp'),
+        ('PayService', 'PayService'),
+        ('Transfer', 'Transfer'),
+        ('Withdrawal', 'Withdrawal'),
+    ])
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    destination_phone = models.CharField(max_length=15, blank=True, null=True)  # Only for transfers
-    bank_account = models.CharField(max_length=30, blank=True, null=True)  # Only for withdrawals
-    date = models.DateTimeField(auto_now_add=True)
+    target_phone = models.CharField(max_length=15, blank=True, null=True)
+    service = models.ForeignKey(Job, blank=True, null=True, on_delete=models.SET_NULL)
+    bank_name = models.CharField(max_length=100, blank=True, null=True)
+    bank_account = models.CharField(max_length=20, blank=True, null=True)
 
     def __str__(self):
-        return f"Transaksi {self.id_transaksi} - {self.transaction_type}"
+        return f"{self.transaction_type} - {self.guest.name}"

@@ -1,48 +1,68 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transaksi MyPay - Buat Transaksi Baru</title>
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <title>Transaksi MyPay</title>
+    <script>
+        function toggleFormFields() {
+            var category = document.getElementById("id_transaction_category").value;
+            
+            // Hide all states initially
+            document.getElementById("state1").style.display = "none";
+            document.getElementById("state2").style.display = "none";
+            document.getElementById("state3").style.display = "none";
+            document.getElementById("state4").style.display = "none";
+            
+            // Show the appropriate state
+            if (category == "topup") {
+                document.getElementById("state1").style.display = "block";
+            } else if (category == "pay_job") {
+                document.getElementById("state2").style.display = "block";
+            } else if (category == "transfer") {
+                document.getElementById("state3").style.display = "block";
+            } else if (category == "withdrawal") {
+                document.getElementById("state4").style.display = "block";
+            }
+        }
+    </script>
 </head>
 <body>
-    <h1>Transaksi MyPay</h1>
-    <form method="post">
+    <h2>Form Transaksi MyPay</h2>
+    <form method="POST">
         {% csrf_token %}
-        <label for="transaction_type">Jenis Transaksi:</label>
-        <select name="transaction_type" id="transaction_type" required>
-            <option value="top_up">Top Up</option>
-            <option value="payment">Pembayaran Jasa</option>
-            <option value="transfer">Transfer</option>
-            <option value="withdrawal">Penarikan</option>
-        </select><br><br>
+        {{ form.as_p }}
 
-        <label for="amount">Jumlah:</label>
-        <input type="number" name="amount" id="amount" required><br><br>
-
-        <!-- Field khusus untuk Transfer -->
-        <div id="transfer_info" style="display: none;">
-            <label for="destination_phone">No. HP Tujuan (untuk Transfer):</label>
-            <input type="text" name="destination_phone" id="destination_phone"><br><br>
+        <!-- Dynamic States Based on Transaction Category -->
+        <div id="state1" style="display:none;">
+            {{ form.topup_amount }}
         </div>
 
-        <!-- Field khusus untuk Withdrawal -->
-        <div id="withdrawal_info" style="display: none;">
-            <label for="bank_account">No. Rekening Bank (untuk Penarikan):</label>
-            <input type="text" name="bank_account" id="bank_account"><br><br>
+        <div id="state2" style="display:none;">
+            {{ form.job_order }}
+            {{ form.price }}
         </div>
 
-        <button type="submit">Submit Transaksi</button>
+        <div id="state3" style="display:none;">
+            {{ form.transfer_phone }}
+            {{ form.transfer_amount }}
+        </div>
+
+        <div id="state4" style="display:none;">
+            {{ form.bank_name }}
+            {{ form.account_number }}
+            {{ form.withdrawal_amount }}
+        </div>
+
+        <button type="submit">Submit</button>
     </form>
 
     <script>
-        const transactionType = document.getElementById('transaction_type');
-        transactionType.addEventListener('change', function() {
-            document.getElementById('transfer_info').style.display = transactionType.value === 'transfer' ? 'block' : 'none';
-            document.getElementById('withdrawal_info').style.display = transactionType.value === 'withdrawal' ? 'block' : 'none';
-        });
+        // Call toggleFormFields function to hide/show fields on category change
+        document.getElementById("id_transaction_category").addEventListener("change", toggleFormFields);
+
+        // Initial call to show/hide fields based on default selection
+        toggleFormFields();
     </script>
 </body>
 </html>

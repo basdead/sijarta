@@ -4,31 +4,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPay - Saldo dan Riwayat Transaksi</title>
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <title>MyPay</title>
 </head>
 <body>
-    <h1>Saldo MyPay</h1>
-    <p><strong>Saldo Saat Ini:</strong> Rp {{ user.mypay_saldo }}</p>
+    <h1>MyPay</h1>
 
+    <!-- Tampilkan informasi user -->
+    <p><strong>Nomor HP:</strong> {{ request.user.username }}</p>
+    <p><strong>Saldo:</strong> Rp {{ mypay.saldo }}</p>
+
+    <!-- Tampilkan tombol untuk transaksi baru -->
+    <a href="{% url 'transaksimypay' %}">
+        <button>Lakukan Transaksi</button>
+    </a>
+
+    <!-- Riwayat Transaksi -->
     <h2>Riwayat Transaksi</h2>
     <table>
-        <tr>
-            <th>ID Transaksi</th>
-            <th>Jenis Transaksi</th>
-            <th>Jumlah</th>
-            <th>Tanggal</th>
-        </tr>
-        {% for transaction in transactions %}
-        <tr>
-            <td>{{ transaction.id_transaksi }}</td>
-            <td>{{ transaction.transaction_type }}</td>
-            <td>Rp {{ transaction.amount }}</td>
-            <td>{{ transaction.date }}</td>
-        </tr>
-        {% endfor %}
+        <thead>
+            <tr>
+                <th>Tanggal</th>
+                <th>Nominal</th>
+                <th>Kategori</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for transaction in transactions %}
+                <tr>
+                    <td>{{ transaction.tanggal }}</td>
+                    <td>Rp {{ transaction.nominal }}</td>
+                    <td>{{ transaction.kategori }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
     </table>
-
-    <button onclick="location.href='{% url 'transaksi_mypay' %}'">Top Up / Transaksi Baru</button>
 </body>
 </html>

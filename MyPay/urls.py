@@ -1,6 +1,6 @@
 from django.urls import path
-from . import views
+from .views import mypay_view
 
 urlpatterns = [
-    path('', views.mypay_view, name='mypay'),  # Menampilkan saldo dan riwayat transaksi MyPay
+    path('', mypay_view, name='mypay'),
 ]
