@@ -13,7 +13,9 @@ urlpatterns = [
     path('logout/', views.logout_user, name='logout_user'),
 
     # Profile Management
+    path('profile/', views.profile, name='profile'),
     path('profile/pengguna/', views.profile_pengguna, name='profile_pengguna'),
+    path('profile/pekerja/', views.profile_pekerja, name='profile_pekerja'),
 
     # Subcategory and Service Sessions
     path('subcategory/<int:subcategory_id>/', views.subcategory_session, name='subcategory_session'),
