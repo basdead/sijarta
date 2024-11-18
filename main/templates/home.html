@@ -50,6 +50,10 @@
         <button class="close" onclick="closeModal()" aria-label="Close modal">&times;</button>
         <h1 id="registerModalTitle" class="staatliches-regular">Register</h1>
         <!-- Registration form content -->
+        <div class="modal-buttons">
+            <button class="custom-button" onclick="window.location.href='{% url 'main:register' %}?role=pengguna'">Pengguna</button>
+            <button class="custom-button" onclick="window.location.href='{% url 'main:register' %}?role=pekerja'">Pekerja</button>
+        </div>
     </div>
 </div>
 
@@ -226,6 +230,12 @@
   .custom-button:hover {
       background-color: #084c61;
   }
+
+  .modal-buttons {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+  }
 </style>
 
 <!-- JavaScript -->
@@ -248,5 +258,36 @@
             closeModal();
         }
     });
+
+    // Register functions
+    function registerPengguna() {
+        submitRegistrationForm('pengguna');
+    }
+
+    function registerPekerja() {
+        submitRegistrationForm('pekerja');
+    }
+
+    function submitRegistrationForm(role) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{% url 'main:register' %}";
+
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+
+        const roleInput = document.createElement('input');
+        roleInput.type = 'hidden';
+        roleInput.name = 'role';
+        roleInput.value = role;
+        form.appendChild(roleInput);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
 </script>
 {% endblock %}

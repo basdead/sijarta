@@ -16,6 +16,7 @@ class RoleSelectionForm(forms.Form):
 # Form registrasi untuk Pengguna
 class PenggunaForm(UserCreationForm):
     nama = forms.CharField(max_length=255, required=True)
+    pwd = forms.CharField(widget=forms.PasswordInput, required=True)
     jenis_kelamin = forms.ChoiceField(
         choices=[('L', 'Laki-laki'), ('P', 'Perempuan')],
         widget=forms.RadioSelect,
@@ -27,13 +28,11 @@ class PenggunaForm(UserCreationForm):
         required=True
     )
     alamat = forms.CharField(max_length=255, required=True)
-    npwp = forms.CharField(max_length=15, required=True)
 
     class Meta:
-        model = User
+        model = Pengguna
         fields = (
-            'username', 'password1', 'password2', 'nama',
-            'jenis_kelamin', 'no_hp', 'tgl_lahir', 'alamat', 'npwp'
+            'nama', 'pwd', 'jenis_kelamin', 'no_hp', 'tgl_lahir', 'alamat'
         )
 
     def clean_no_hp(self):
@@ -42,16 +41,11 @@ class PenggunaForm(UserCreationForm):
             raise forms.ValidationError("No HP sudah terdaftar.")
         return no_hp
 
-    def clean_npwp(self):
-        npwp = self.cleaned_data.get('npwp')
-        if Pengguna.objects.filter(npwp=npwp).exists():
-            raise forms.ValidationError("NPWP sudah terdaftar.")
-        return npwp
-
 
 # Form registrasi untuk Pekerja
 class PekerjaForm(UserCreationForm):
     nama = forms.CharField(max_length=255, required=True)
+    pwd = forms.CharField(widget=forms.PasswordInput, required=True)
     jenis_kelamin = forms.ChoiceField(
         choices=[('L', 'Laki-laki'), ('P', 'Perempuan')],
         widget=forms.RadioSelect,
@@ -63,26 +57,17 @@ class PekerjaForm(UserCreationForm):
         required=True
     )
     alamat = forms.CharField(max_length=255, required=True)
-    nama_bank = forms.ChoiceField(
-        choices=[
-            ('GoPay', 'GoPay'),
-            ('OVO', 'OVO'),
-            ('VA BCA', 'Virtual Account BCA'),
-            ('VA BNI', 'Virtual Account BNI'),
-            ('VA Mandiri', 'Virtual Account Mandiri')
-        ],
-        required=True
-    )
+    saldomypay = forms.DecimalField(max_digits=10, decimal_places=2, required=True)
+    nama_bank = forms.CharField(max_length=50, required=True)
     no_rekening = forms.CharField(max_length=20, required=True)
     npwp = forms.CharField(max_length=15, required=True)
     foto_url = forms.URLField(required=True)
 
     class Meta:
-        model = User
+        model = Pekerja
         fields = (
-            'username', 'password1', 'password2', 'nama',
-            'jenis_kelamin', 'no_hp', 'tgl_lahir', 'alamat',
-            'nama_bank', 'no_rekening', 'npwp', 'foto_url'
+            'nama', 'pwd', 'jenis_kelamin', 'no_hp', 'tgl_lahir', 'alamat',
+            'saldomypay', 'nama_bank', 'no_rekening', 'npwp', 'foto_url'
         )
 
     def clean_no_hp(self):
@@ -106,7 +91,6 @@ class PekerjaForm(UserCreationForm):
         if Pekerja.objects.filter(nama_bank=nama_bank, no_rekening=no_rekening).exists():
             raise forms.ValidationError("Pasangan nama bank dan nomor rekening sudah terdaftar.")
         return cleaned_data
-
 
 # Form untuk Subkategori Jasa
 class SubkategoriForm(forms.ModelForm):
