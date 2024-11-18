@@ -37,7 +37,6 @@
     <!-- Tombol Login dan Register -->
     <div class="buttons button-container">
         {% if user.is_authenticated %}
-            <a href="{% url 'main:logout_user' %}" class="custom-home-btn custom-button">Logout</a>
         {% else %}
             <a href="{% url 'main:login_user' %}" class="custom-home-btn custom-button custom-login-btn">Login</a>
             <button onclick="openModal()" class="custom-home-btn custom-button">Register</button>
