@@ -1,10 +1,5 @@
 from django.contrib import admin
-from .models import Guest, MyPay, MyPayTransaction
-
-@admin.register(Guest)
-class GuestAdmin(admin.ModelAdmin):
-    list_display = ('id_tamu', 'nama', 'alamat', 'no_telp', 'email')
-    search_fields = ('nama', 'no_telp', 'email')
+from .models import Pengguna, MyPay, MyPayTransaction
 
 @admin.register(MyPay)
 class MyPayAdmin(admin.ModelAdmin):

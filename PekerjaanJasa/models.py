@@ -1,7 +1,5 @@
-from django.db import models
-from MyPay.models import Guest  # Asumsi Guest adalah model yang ada di MyPay
-
-
+from django.db import models # Asumsi Guest adalah model yang ada di MyPay
+from main.models import Pengguna, Pekerja
 class JobCategory(models.Model):
     name = models.CharField(max_length=50)
     description = models.TextField()
@@ -22,7 +20,7 @@ class Job(models.Model):
     id_job = models.CharField(max_length=10, primary_key=True)
     category = models.ForeignKey(JobCategory, related_name="jobs", on_delete=models.CASCADE)
     subcategory = models.ForeignKey(JobSubcategory, related_name="jobs", on_delete=models.CASCADE)
-    guest = models.ForeignKey(Guest, on_delete=models.CASCADE)
+    guest = models.ForeignKey(Pengguna, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, default="Mencari Pekerja Terdekat")
 
     def __str__(self):
@@ -42,7 +40,7 @@ class MyPayTransaction(models.Model):
         (WITHDRAWAL, 'Withdrawal'),
     ]
 
-    user = models.ForeignKey(Guest, related_name="pekerjaanjasa_transactions", on_delete=models.CASCADE)
+    user = models.ForeignKey(Pengguna, related_name="pekerjaanjasa_transactions", on_delete=models.CASCADE)
     transaction_type = models.CharField(max_length=20, choices=TRANSACTION_CHOICES)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     target_phone = models.CharField(max_length=15, blank=True, null=True)  # Hanya untuk Transfer

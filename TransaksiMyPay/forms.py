@@ -1,5 +1,4 @@
 from django import forms
-from MyPay.models import Guest
 from PekerjaanJasa.models import Job
 
 class TransactionForm(forms.Form):
