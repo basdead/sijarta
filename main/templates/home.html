@@ -5,7 +5,11 @@
 <div class="home-content">
     <div class="title">
         <img src="{% static 'images/sijarta.svg' %}" alt="Sijarta Logo" height="120">
-        <h5>by basdead</h5>
+        {% if user.is_authenticated %}
+            <h5>Welcome, {{ user.pengguna.nama }}</h5>
+        {% else %}
+            <h5>by basdead</h5>
+        {% endif %}
     </div>
 
     <!-- Menampilkan Kategori dan Subkategori -->
@@ -31,8 +35,12 @@
 
     <!-- Tombol Login dan Register -->
     <div class="buttons">
-        <a href="{% url 'main:login_user' %}" class="custom-home-btn custom-login-btn">Login</a>
-        <button onclick="openModal()" class="custom-home-btn custom-register-btn">Register</button>
+        {% if user.is_authenticated %}
+            <a href="{% url 'main:logout_user' %}" class="custom-home-btn custom-logout-btn">Logout</a>
+        {% else %}
+            <a href="{% url 'main:login_user' %}" class="custom-home-btn custom-login-btn">Login</a>
+            <button onclick="openModal()" class="custom-home-btn custom-register-btn">Register</button>
+        {% endif %}
     </div>
 </div>
 
@@ -41,14 +49,7 @@
     <div class="modal-content">
         <button class="close" onclick="closeModal()" aria-label="Close modal">&times;</button>
         <h1 id="registerModalTitle" class="staatliches-regular">Register</h1>
-        <form method="post" action="{% url 'main:register' %}">
-            {% csrf_token %}
-            <p class="modal-text">Please select your role:</p>
-            <div class="form-group">
-                {{ role_form.as_p }}
-            </div>
-            <button type="submit" class="btn btn-primary custom-button">Choose Role</button>
-        </form>
+        <!-- Registration form content -->
     </div>
 </div>
 
