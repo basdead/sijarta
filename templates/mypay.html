@@ -1,42 +1,28 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyPay</title>
+    <title>MyPay Home</title>
 </head>
 <body>
-    <h1>MyPay</h1>
+    <h1>Welcome to MyPay</h1>
 
-    <!-- Tampilkan informasi user -->
-    <p><strong>Nomor HP:</strong> {{ request.user.username }}</p>
-    <p><strong>Saldo:</strong> Rp {{ mypay.saldo }}</p>
+    {% if mypay %}
+        <h2>Your Current Balance: ${{ mypay.balance }}</h2>
+    {% else %}
+        <p>You do not have a MyPay account.</p>
+    {% endif %}
 
-    <!-- Tampilkan tombol untuk transaksi baru -->
-    <a href="{% url 'transaksimypay' %}">
-        <button>Lakukan Transaksi</button>
-    </a>
+    <h3>Transaction History:</h3>
+    <ul>
+        {% for transaction in transactions %}
+            <li>${{ transaction.amount }} - {{ transaction.transaction_date }}</li>
+        {% empty %}
+            <p>No transactions yet.</p>
+        {% endfor %}
+    </ul>
 
-    <!-- Riwayat Transaksi -->
-    <h2>Riwayat Transaksi</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Tanggal</th>
-                <th>Nominal</th>
-                <th>Kategori</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for transaction in transactions %}
-                <tr>
-                    <td>{{ transaction.tanggal }}</td>
-                    <td>Rp {{ transaction.nominal }}</td>
-                    <td>{{ transaction.kategori }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <a href="{% url 'mypay:create_transaction' %}">Make a Transaction</a>
 </body>
 </html>

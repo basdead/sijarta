@@ -17,11 +17,14 @@
                     <a href="" class="nav-item nav-link">MyPay</a>
                     <a href="{% url 'main:view_orders' %}" class="nav-item nav-link">Kelola Pesanan Saya</a>
                     <a href="" class="nav-item nav-link">Diskon</a>
+                    <a href="{% url 'mypay:my_pay' %}" class="nav-item nav-link">MyPay</a>
+
                 {% elif user.pekerja %}
                     <a href="" class="nav-item nav-link active">Homepage</a>
                     <a href="" class="nav-item nav-link">Kelola Pekerjaan Saya</a>
                     <a href="" class="nav-item nav-link">Kelola Status Pekerjaan</a>
-                    <a href="" class="nav-item nav-link">MyPay</a>
+                    <a href="{% url 'mypay:my_pay' %}" class="nav-item nav-link">MyPay</a>
+
                 {% endif %}
             {% endif %}
         </div>

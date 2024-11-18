@@ -21,7 +21,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('main.urls')),  # Rute utama untuk aplikasi utama (misal: halaman landing)
     path('mypay/', include('MyPay.urls')),  # Rute untuk fitur MyPay (saldo & riwayat transaksi)
-    path('transaksi/', include('TransaksiMyPay.urls')),  # Rute untuk transaksi MyPay baru
-    path('pekerjaan/', include('PekerjaanJasa.urls')),  # Rute untuk daftar pekerjaan jasa
-    path('status/', include('StatusPekerjaanJasa.urls')),  # Rute untuk status pekerjaan jasa
+    # path('transaksi/', include('TransaksiMyPay.urls')),  # Rute untuk transaksi MyPay baru
+    # path('pekerjaan/', include('PekerjaanJasa.urls')),  # Rute untuk daftar pekerjaan jasa
+    # path('status/', include('StatusPekerjaanJasa.urls')),  # Rute untuk status pekerjaan jasa
 ]

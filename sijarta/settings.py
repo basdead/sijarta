@@ -40,9 +40,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'main',
     'MyPay',
-    'TransaksiMyPay',
-    'PekerjaanJasa',
-    'StatusPekerjaanJasa',
+    # 'TransaksiMyPay',
+    # 'PekerjaanJasa',
+    # 'StatusPekerjaanJasa',
 ]
 
 MIDDLEWARE = [

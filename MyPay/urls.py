@@ -1,6 +1,9 @@
 from django.urls import path
-from .views import mypay_view
+from . import views
+
+app_name = 'mypay'
 
 urlpatterns = [
-    path('', mypay_view, name='mypay'),
+    path('', views.mypay_home, name='my_pay'),  # Display MyPay balance and transaction history
+    path('transaction/', views.create_transaction, name='create_transaction'),  # Create a new transaction
 ]

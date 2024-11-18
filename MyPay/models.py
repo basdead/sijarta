@@ -3,11 +3,8 @@ from main.models import Pengguna
 
 # Model MyPay
 class MyPay(models.Model):
-    guest = models.ForeignKey(Pengguna, on_delete=models.CASCADE)
-    balance = models.DecimalField(max_digits=10, decimal_places=2)
-
-    def __str__(self):
-        return f"MyPay account for {self.guest.nama}"
+    guest = models.ForeignKey(Pengguna, on_delete=models.CASCADE, related_name='mypay_accounts')
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
 # Model MyPayTransaction
 class MyPayTransaction(models.Model):
