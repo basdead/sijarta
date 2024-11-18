@@ -28,14 +28,14 @@
         <div class="navbar-nav ms-auto">
             {% if user.is_authenticated %}
                 {% if user.pengguna %}
-                <a href="{% url 'main:profile_pengguna' %}" class="nav-item nav-link d-flex align-items-center">
+                <a href="{% url 'main:profile' %}" class="nav-item nav-link d-flex align-items-center">
                     <div class="rounded-circle d-flex justify-content-center align-items-center" style="width: 36px; height: 36px; background-color: #177E89; color: white; font-weight: bold;">
                       {{ user.pengguna.nama|slice:":1" }}
                     </div>
                   <span class="ms-2">{{ user.pengguna.nama }} (Pengguna)</span>
                 </a>
                 {% elif user.pekerja %}
-                <a href="{% url 'main:profile_pekerja' %}" class="nav-item nav-link d-flex align-items-center">
+                <a href="{% url 'main:profile' %}" class="nav-item nav-link d-flex align-items-center">
                   <img src="{% static 'images/profile_icon.png' %}" class="rounded-circle" height="36">
                   <span class="ms-2">{{ user.pekerja.nama }} (Pekerja)</span>
                 </a>

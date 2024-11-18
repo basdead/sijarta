@@ -4,9 +4,25 @@
 
 {% block content %}
 <h1>Profile Pengguna</h1>
-<form method="post">
+<form method="post" action="{% url 'main:profile_pengguna' %}">
     {% csrf_token %}
-    {{ form.as_p }}
+    {% for field in form %}
+    <div class="form-group">
+        {{ field.label_tag }} 
+        {{ field }}
+        {% if field.errors %}
+        <div class="alert alert-danger">
+            {{ field.errors }}
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
     <button type="submit" class="btn btn-primary">Update Profile</button>
 </form>
+
+{% if form.non_field_errors %}
+<div class="alert alert-danger">
+    {{ form.non_field_errors }}
+</div>
+{% endif %}
 {% endblock %}

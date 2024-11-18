@@ -5,6 +5,8 @@ from django.db import transaction
 from django.contrib.auth.decorators import login_required
 from .forms import RoleSelectionForm, PenggunaForm, PekerjaForm, SubkategoriForm, OrderForm
 from .models import Pengguna, Pekerja, KategoriJasa, SubkategoriJasa, Order
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
 # Home page view to display categories and subcategories
 def show_home_page(request):
@@ -103,7 +105,6 @@ def logout_user(request):
     logout(request)
     return redirect('main:show_home_page')
 
-# Profile view for Pengguna
 @login_required
 def profile_pengguna(request):
     """
@@ -114,10 +115,70 @@ def profile_pengguna(request):
         form = PenggunaForm(request.POST, instance=pengguna)
         if form.is_valid():
             form.save()
-            return redirect('main:profile_pengguna')
+            return HttpResponseRedirect(reverse('main:profile'))  # Redirect to profile view
     else:
         form = PenggunaForm(instance=pengguna)
     return render(request, 'profile_pengguna.html', {'form': form})
+    
+@login_required
+def profile_pekerja(request):
+    """
+    View and update profile for Pekerja.
+    """
+    pekerja = get_object_or_404(Pekerja, user=request.user)
+    if request.method == 'POST':
+        form = PekerjaForm(request.POST, instance=pekerja)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(reverse('main:profile'))
+    else:
+        form = PekerjaForm(instance=pekerja)
+    return render(request, 'profile_pekerja.html', {'form': form})
+
+@login_required
+def profile(request):
+    """
+    View and update profile based on user role.
+    """
+    if hasattr(request.user, 'pengguna'):
+        profile = request.user.pengguna
+        form_class = PenggunaForm
+        template_name = 'profile.html'
+        additional_attributes = {
+            'saldomypay': profile.saldomypay,
+            'level': profile.level
+        }
+    elif hasattr(request.user, 'pekerja'):
+        profile = request.user.pekerja
+        form_class = PekerjaForm
+        template_name = 'profile.html'
+        additional_attributes = {
+            'saldomypay': profile.saldomypay,
+            'nama_bank': profile.nama_bank,
+            'no_rekening': profile.no_rekening,
+            'npwp': profile.npwp,
+            'foto_url': profile.foto_url,
+            'rating': profile.rating,
+            'jumlah_pesanan_selesai': profile.jumlah_pesanan_selesai
+        }
+    else:
+        return redirect('main:show_home_page')
+
+    if request.method == 'POST':
+        form = form_class(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            return redirect('main:profile')
+    else:
+        form = form_class(instance=profile)
+
+    context = {
+        'form': form,
+        'profile': profile,
+        'additional_attributes': additional_attributes
+    }
+
+    return render(request, template_name, context)
 
 # Subcategory session view
 def subcategory_session(request, subcategory_id):
