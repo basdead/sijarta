@@ -22,8 +22,8 @@ def register(request):
         if role == 'pengguna':
             form = PenggunaForm(request.POST)
             if form.is_valid():
-                user = form.save(commit=False)
-                user.set_password(form.cleaned_data['pwd'])
+                user = User.objects.create(username=request.POST['no_hp'])
+                user.set_password(request.POST['pwd'])  # Hash the password securely
                 user.save()
                 Pengguna.objects.create(
                     user=user,
@@ -38,8 +38,8 @@ def register(request):
         elif role == 'pekerja':
             form = PekerjaForm(request.POST)
             if form.is_valid():
-                user = form.save(commit=False)
-                user.set_password(form.cleaned_data['pwd'])
+                user = User.objects.create(username=request.POST['no_hp'])
+                user.set_password(request.POST['pwd'])  # Hash the password securely
                 user.save()
                 Pekerja.objects.create(
                     user=user,
