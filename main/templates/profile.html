@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="text-center mb-5">Profile</h1>
+
+    <!-- Display Profile Details -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Profile Details</h5>
+                    <p><strong>Nama:</strong> {{ profile.nama }}</p>
+                    <p><strong>Jenis Kelamin:</strong> {{ profile.get_jenis_kelamin_display }}</p>
+                    <p><strong>No HP:</strong> {{ profile.no_hp }}</p>
+                    <p><strong>Tanggal Lahir:</strong> {{ profile.tgl_lahir }}</p>
+                    <p><strong>Alamat:</strong> {{ profile.alamat }}</p>
+
+                    {% if user.is_authenticated and profile|hasattr:'saldo_mypay' %}
+                        <p><strong>Saldo MyPay:</strong> {{ profile.saldo_mypay }}</p>
+                    {% endif %}
+
+                    {% if user.is_authenticated and profile|hasattr:'rating' %}
+                        <p><strong>Rating:</strong> {{ profile.rating }}</p>
+                        <p><strong>Jumlah Pesanan Selesai:</strong> {{ profile.jumlah_pesanan_selesai }}</p>
+                        <p><strong>Kategori Pekerjaan:</strong>
+                            <ul>
+                                {% for kategori in profile.kategori_pekerjaan.all %}
+                                    <li>{{ kategori.nama_kategori }}</li>
+                                {% endfor %}
+                            </ul>
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Update Form -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Update Profile</h5>
+                    <form method="post" action="{% url 'main:update_profile' %}">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+
+                        {% if user.is_authenticated and user.profile_type == 'pekerja' %}
+                            <div class="mb-3">
+                                <label for="nama_bank" class="form-label">Nama Bank</label>
+                                {{ form.nama_bank }}
+                            </div>
+                            <div class="mb-3">
+                                <label for="no_rekening" class="form-label">No Rekening</label>
+                                {{ form.no_rekening }}
+                            </div>
+                            <div class="mb-3">
+                                <label for="npwp" class="form-label">NPWP</label>
+                                {{ form.npwp }}
+                            </div>
+                        {% endif %}
+
+                        <button type="submit" class="btn btn-primary w-100">Update</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Styles -->
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
+    .container {
+        margin-top: 20px;
+    }
+    .card {
+        border: none;
+    }
+    .card-title {
+        font-weight: bold;
+        color: #177E89;
+    }
+    .btn-primary {
+        background-color: #177E89;
+        border: none;
+        transition: background-color 0.3s ease;
+    }
+    .btn-primary:hover {
+        background-color: #084c61;
+    }
+</style>
+{% endblock %}

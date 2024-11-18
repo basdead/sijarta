@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Your Orders</h1>
+<ul>
+    {% for order in orders %}
+    <li>
+        {{ order.details }} 
+        <a href="{% url 'main:update_order' order.id %}">Edit</a>
+        <a href="{% url 'main:delete_order' order.id %}">Delete</a>
+    </li>
+    {% endfor %}
+</ul>
+<a href="{% url 'main:create_order' %}" class="btn btn-primary mt-3">Create New Order</a>
+{% endblock %}

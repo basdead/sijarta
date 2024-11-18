@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Subcategory{% endblock %}
+
+{% block content %}
+<h1>Delete Subcategory</h1>
+<p>Are you sure you want to delete "{{ subcategory.nama_subkategori }}"?</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Delete</button>
+    <a href="{% url 'main:show_home_page' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}
