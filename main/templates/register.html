@@ -6,24 +6,11 @@
         <div class="col-lg-6 col-md-8">
             <h1 class="text-center mb-4">Register</h1>
 
-            <!-- Role Selection Form -->
-            {% if not form %}
-                <form method="post" action="{% url 'main:register' %}" class="p-4 shadow rounded bg-white">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <p class="fw-bold">Please select your role:</p>
-                        {{ role_form.as_p }}
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">Choose Role</button>
-                </form>
-            {% endif %}
-
             <!-- Conditionally Rendered Registration Form Based on Role -->
             {% if form %}
                 <form method="post" action="{% url 'main:register' %}" class="p-4 shadow rounded bg-white">
                     {% csrf_token %}
                     {{ form.as_p }}
-                    <!-- Retain the selected role in a hidden input field -->
                     <input type="hidden" name="role" value="{{ role }}">
                     <button type="submit" class="btn btn-primary w-100 mt-3">Register</button>
                 </form>

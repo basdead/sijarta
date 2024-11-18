@@ -3,8 +3,8 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.contrib.auth.decorators import login_required
-from .forms import RoleSelectionForm, PenggunaForm, OrderForm
-from .models import Pengguna, KategoriJasa, SubkategoriJasa, Order
+from .forms import RoleSelectionForm, PenggunaForm, PekerjaForm, SubkategoriForm, OrderForm
+from .models import Pengguna, Pekerja, KategoriJasa, SubkategoriJasa, Order
 
 # Home page view to display categories and subcategories
 def show_home_page(request):
@@ -14,32 +14,57 @@ def show_home_page(request):
     categories = KategoriJasa.objects.prefetch_related('subkategori').all()
     return render(request, 'home.html', {'categories': categories})
 
-# Registration view
 @transaction.atomic
 def register(request):
-    """
-    Handle registration for Pengguna.
-    """
-    form = None
+    role = request.GET.get('role')
     if request.method == 'POST':
-        form = PenggunaForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            Pengguna.objects.create(
-                user=user,
-                nama=form.cleaned_data['nama'],
-                jenis_kelamin=form.cleaned_data['jenis_kelamin'],
-                no_hp=form.cleaned_data['no_hp'],
-                tgl_lahir=form.cleaned_data['tgl_lahir'],
-                alamat=form.cleaned_data['alamat'],
-                npwp=form.cleaned_data['npwp']
-            )
-            login(request, user)
-            return redirect('main:show_home_page')
+        role = request.POST.get('role')
+        if role == 'pengguna':
+            form = PenggunaForm(request.POST)
+            if form.is_valid():
+                user = form.save(commit=False)
+                user.set_password(form.cleaned_data['pwd'])
+                user.save()
+                Pengguna.objects.create(
+                    user=user,
+                    nama=form.cleaned_data['nama'],
+                    jenis_kelamin=form.cleaned_data['jenis_kelamin'],
+                    no_hp=form.cleaned_data['no_hp'],
+                    tgl_lahir=form.cleaned_data['tgl_lahir'],
+                    alamat=form.cleaned_data['alamat']
+                )
+                login(request, user)
+                return redirect('main:show_home_page')
+        elif role == 'pekerja':
+            form = PekerjaForm(request.POST)
+            if form.is_valid():
+                user = form.save(commit=False)
+                user.set_password(form.cleaned_data['pwd'])
+                user.save()
+                Pekerja.objects.create(
+                    user=user,
+                    nama=form.cleaned_data['nama'],
+                    jenis_kelamin=form.cleaned_data['jenis_kelamin'],
+                    no_hp=form.cleaned_data['no_hp'],
+                    tgl_lahir=form.cleaned_data['tgl_lahir'],
+                    alamat=form.cleaned_data['alamat'],
+                    saldomypay=form.cleaned_data['saldomypay'],
+                    nama_bank=form.cleaned_data['nama_bank'],
+                    no_rekening=form.cleaned_data['no_rekening'],
+                    npwp=form.cleaned_data['npwp'],
+                    foto_url=form.cleaned_data['foto_url']
+                )
+                login(request, user)
+                return redirect('main:show_home_page')
     else:
-        form = PenggunaForm()
+        if role == 'pengguna':
+            form = PenggunaForm()
+        elif role == 'pekerja':
+            form = PekerjaForm()
+        else:
+            form = None
 
-    return render(request, 'register.html', {'form': form})
+    return render(request, 'register.html', {'form': form, 'role': role})
 
 # Login view
 def login_user(request):
@@ -76,7 +101,7 @@ def logout_user(request):
     Handle user logout.
     """
     logout(request)
-    return redirect('main:login_user')
+    return redirect('main:show_home_page')
 
 # Profile view for Pengguna
 @login_required
