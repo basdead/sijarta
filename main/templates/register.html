@@ -4,13 +4,84 @@
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-lg-6 col-md-8">
-            <h1 class="text-center mb-4">Register</h1>
-
             <!-- Conditionally Rendered Registration Form Based on Role -->
             {% if form %}
-                <form method="post" action="{% url 'main:register' %}" class="p-4 shadow rounded bg-white">
+                <form method="post" action="{% url 'main:register' %}" class="p-4 shadow rounded bg-white w-100">
+                    <h1 class="text-center mb-4">Register</h1>
                     {% csrf_token %}
-                    {{ form.as_p }}
+                    
+                    {% if role == 'pengguna' %}
+                        <div class="form-group mb-3 w-100">
+                            <label for="{{ form.nama.id_for_label }}">Nama</label>
+                            <div class="w-100">{{ form.nama }}</div>
+                        </div>
+                        <div class="form-group mb-3 w-100">
+                            <label for="{{ form.pwd.id_for_label }}">Password</label>
+                            <div class="w-100">{{ form.pwd }}</div>
+                        </div>
+                        <div class="form-group mb-3 w-100">
+                            <label for="{{ form.jenis_kelamin.id_for_label }}">Jenis Kelamin</label>
+                            <div class="w-100">{{ form.jenis_kelamin }}</div>
+                        </div>
+                        <div class="form-group mb-3 w-100">
+                            <label for="{{ form.no_hp.id_for_label }}">Nomor Handphone</label>
+                            <div class="w-100">{{ form.no_hp }}</div>
+                        </div>
+                        <div class="form-group mb-3 w-100">
+                            <label for="{{ form.tgl_lahir.id_for_label }}">Tanggal Lahir</label>
+                            <div class="w-100">{{ form.tgl_lahir }}</div>
+                        </div>
+                        <div class="form-group mb-3 w-100">
+                            <label for="{{ form.alamat.id_for_label }}">Alamat</label>
+                            <div class="w-100">{{ form.alamat }}</div>
+                        </div>
+                    {% elif role == 'pekerja' %}
+                        <div class="form-group mb-3 w-100">
+                            <label for="{{ form.nama.id_for_label }}">Nama</label>
+                            <div class="w-100">{{ form.nama }}</div>
+                        </div>
+                        <div class="form-group mb-3 w-100">
+                            <label for="{{ form.pwd.id_for_label }}">Password</label>
+                            <div class="w-100">{{ form.pwd }}</div>
+                        </div>
+                        <div class="form-group mb-3 w-100">
+                            <label for="{{ form.jenis_kelamin.id_for_label }}">Jenis Kelamin</label>
+                            <div class="w-100">{{ form.jenis_kelamin }}</div>
+                        </div>
+                        <div class="form-group mb-3 w-100">
+                            <label for="{{ form.no_hp.id_for_label }}">No Hp</label>
+                            <div class="w-100">{{ form.no_hp }}</div>
+                        </div>
+                        <div class="form-group mb-3 w-100">
+                            <label for="{{ form.tgl_lahir.id_for_label }}">Tgl Lahir</label>
+                            <div class="w-100">{{ form.tgl_lahir }}</div>
+                        </div>
+                        <div class="form-group mb-3 w-100">
+                            <label for="{{ form.alamat.id_for_label }}">Alamat</label>
+                            <div class="w-100">{{ form.alamat }}</div>
+                        </div>
+                        <div class="form-group mb-3 w-100">
+                            <label for="{{ form.saldomypay.id_for_label }}">Saldo MyPay</label>
+                            <div class="w-100">{{ form.saldomypay }}</div>
+                        </div>
+                        <div class="form-group mb-3 w-100">
+                            <label for="{{ form.nama_bank.id_for_label }}">Nama Bank</label>
+                            <div class="w-100">{{ form.nama_bank }}</div>
+                        </div>
+                        <div class="form-group mb-3 w-100">
+                            <label for="{{ form.no_rekening.id_for_label }}">No Rekening</label>
+                            <div class="w-100">{{ form.no_rekening }}</div>
+                        </div>
+                        <div class="form-group mb-3 w-100">
+                            <label for="{{ form.npwp.id_for_label }}">NPWP</label>
+                            <div class="w-100">{{ form.npwp }}</div>
+                        </div>
+                        <div class="form-group mb-3 w-100">
+                            <label for="{{ form.foto_url.id_for_label }}">Foto URL</label>
+                            <div class="w-100">{{ form.foto_url }}</div>
+                        </div>
+                    {% endif %}
+                    
                     <input type="hidden" name="role" value="{{ role }}">
                     <button type="submit" class="btn btn-primary w-100 mt-3">Register</button>
                 </form>
@@ -31,18 +102,34 @@
 <!-- Styles for Register Page -->
 <style>
     body {
-        background-color: #f8f9fa; /* Light background */
+        background-color: #f8f9fa;
     }
     .container {
         margin-top: 20px;
     }
     h1 {
         font-family: 'Inter', sans-serif;
-        font-weight: 700;
-        color: #343a40; /* Dark gray for the title */
+        font-weight: 900;
+        color: #343a40;
     }
     form {
         font-family: 'Inter', sans-serif;
+    }
+    .form-group {
+        margin-bottom: 1rem;
+        width: 100%;
+    }
+    .form-group > div {
+        width: 100%;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        line-height: 1.5;
     }
     .btn-primary {
         background-color: #177E89;
@@ -51,6 +138,10 @@
     }
     .btn-primary:hover {
         background-color: #084c61;
+    }
+    .form-check-inline {
+        display: inline-block;
+        margin-right: 1rem;
     }
 </style>
 {% endblock %}
