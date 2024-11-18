@@ -14,7 +14,7 @@ class RoleSelectionForm(forms.Form):
 
 
 # Form registrasi untuk Pengguna
-class PenggunaForm(UserCreationForm):
+class PenggunaForm(forms.ModelForm):
     nama = forms.CharField(max_length=255, required=True)
     pwd = forms.CharField(widget=forms.PasswordInput, required=True)
     jenis_kelamin = forms.ChoiceField(
@@ -43,7 +43,7 @@ class PenggunaForm(UserCreationForm):
 
 
 # Form registrasi untuk Pekerja
-class PekerjaForm(UserCreationForm):
+class PekerjaForm(forms.ModelForm):
     nama = forms.CharField(max_length=255, required=True)
     pwd = forms.CharField(widget=forms.PasswordInput, required=True)
     jenis_kelamin = forms.ChoiceField(
@@ -87,7 +87,6 @@ class PekerjaForm(UserCreationForm):
         nama_bank = cleaned_data.get('nama_bank')
         no_rekening = cleaned_data.get('no_rekening')
 
-        # Validasi unik untuk pasangan nama bank dan no rekening
         if Pekerja.objects.filter(nama_bank=nama_bank, no_rekening=no_rekening).exists():
             raise forms.ValidationError("Pasangan nama bank dan nomor rekening sudah terdaftar.")
         return cleaned_data
