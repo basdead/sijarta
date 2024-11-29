@@ -1,22 +1,95 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block title %}Profile Pengguna{% endblock %}
-
 {% block content %}
+{% include 'navbar.html' %}
+<div class="edit-profile-content">
+    <div class="navigation">
+        <div class="navigation-buttons">
+            <button onclick="window.location.href='{% url 'main:show_home_page' %}'" class="navigation-button">
+                <div class="home horizontal-stack-info">
+                    <img src="https://www.svgrepo.com/show/500894/home.svg" alt="Home" style="width: 20px; height: 20px;">
+                    <span>Home</span>
+                </div>
+            </button>
+            <div class="path">
+                <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
+            </div>
+            <button onclick="window.location.href='{% url 'main:profile' %}'" class="navigation-button">
+                <div class="home horizontal-stack-info">
+                    <img src="https://www.svgrepo.com/show/483464/person.svg" alt="Profile" style="width: 15px; height: 15px;">
+                    <span>Profile</span>
+                </div>
+            </button>
+            <div class="path">
+                <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
+            </div>
+            <button onclick="window.location.href='{% url 'main:profile_pengguna' %}'" class="navigation-button">
+                <div class="home horizontal-stack-info" style="color: #667a7b;">
+                    <img src="https://www.svgrepo.com/show/535558/pencil.svg" alt="Edit Profile" style="width: 15px; height: 15px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
+                    <span>Edit Profile</span>
+                </div>
+            </button>
+        </div>
+    </div>
+</div>
+
 <h1>Profile Pengguna</h1>
 <form method="post" action="{% url 'main:profile_pengguna' %}">
     {% csrf_token %}
-    {% for field in form %}
+    
     <div class="form-group">
-        {{ field.label_tag }} 
-        {{ field }}
-        {% if field.errors %}
+        {{ form.nama.label_tag }} 
+        {{ form.nama }}
+        {% if form.nama.errors %}
         <div class="alert alert-danger">
-            {{ field.errors }}
+            {{ form.nama.errors }}
         </div>
         {% endif %}
     </div>
-    {% endfor %}
+    
+    <div class="form-group">
+        {{ form.jenis_kelamin.label_tag }} 
+        {{ form.jenis_kelamin }}
+        {% if form.jenis_kelamin.errors %}
+        <div class="alert alert-danger">
+            {{ form.jenis_kelamin.errors }}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="form-group">
+        {{ form.no_hp.label_tag }} 
+        {{ form.no_hp }}
+        {% if form.no_hp.errors %}
+        <div class="alert alert-danger">
+            {{ form.no_hp.errors }}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="form-group">
+        {{ form.tgl_lahir.label_tag }} 
+        {{ form.tgl_lahir }}
+        {% if form.tgl_lahir.errors %}
+        <div class="alert alert-danger">
+            {{ form.tgl_lahir.errors }}
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="form-group">
+        {{ form.alamat.label_tag }} 
+        {{ form.alamat }}
+        {% if form.alamat.errors %}
+        <div class="alert alert-danger">
+            {{ form.alamat.errors }}
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Add other fields similarly, excluding the password field -->
+    
     <button type="submit" class="btn btn-primary">Update Profile</button>
 </form>
 
@@ -25,4 +98,34 @@
     {{ form.non_field_errors }}
 </div>
 {% endif %}
+
+<style>
+    body {
+        padding-top: 70px; /* Adjust this value based on the height of your navbar */
+    }
+
+    button {
+        outline: none;
+    }
+
+    .edit-profile-content {
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .navigation-buttons {
+        display: flex;
+        margin-bottom: 20px;
+    }
+
+    .navigation-button {
+        padding: 0.3rem 0.8rem;
+        border-radius: 2rem;
+        background-color: #e9f0f1;
+        width: fit-content;
+        display: flex;
+        flex-direction: row;
+        border: none;
+    }
+</style>
 {% endblock %}

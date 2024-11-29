@@ -57,7 +57,6 @@ class PekerjaForm(forms.ModelForm):
         required=True
     )
     alamat = forms.CharField(max_length=255, required=True)
-    saldomypay = forms.DecimalField(max_digits=10, decimal_places=2, required=True)
     nama_bank = forms.CharField(max_length=50, required=True)
     no_rekening = forms.CharField(max_length=20, required=True)
     npwp = forms.CharField(max_length=15, required=True)
@@ -66,8 +65,7 @@ class PekerjaForm(forms.ModelForm):
     class Meta:
         model = Pekerja
         fields = (
-            'nama', 'pwd', 'jenis_kelamin', 'no_hp', 'tgl_lahir', 'alamat',
-            'saldomypay', 'nama_bank', 'no_rekening', 'npwp', 'foto_url'
+            'nama', 'pwd', 'jenis_kelamin', 'no_hp', 'tgl_lahir', 'alamat','nama_bank', 'no_rekening', 'npwp', 'foto_url'
         )
 
     def clean_no_hp(self):

@@ -3,7 +3,7 @@
 {% block content %}
 <nav class="navbar navbar-expand-lg navbar-light bg-light p-3 fixed-top">
   <div class="container-fluid">
-      <a href="" class="navbar-brand">
+      <a href="{% url 'main:show_home_page' %}" class="navbar-brand">
         <img src="{% static 'images/sijarta.svg' %}" height="36" alt="Sijarta">
       </a>
       <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
@@ -29,17 +29,16 @@
             {% if user.is_authenticated %}
                 {% if user.pengguna %}
                 <a href="{% url 'main:profile' %}" class="nav-item nav-link d-flex align-items-center">
-                    <div class="rounded-circle d-flex justify-content-center align-items-center" style="width: 36px; height: 36px; background-color: #177E89; color: white; font-weight: bold;">
+                    <div class="rounded-circle d-flex justify-content-center align-items-center" style="width: 36px; height: 36px; background-color: #177E89; color: white; font-weight: bold; font-size: 1rem;">
                       {{ user.pengguna.nama|slice:":1" }}
                     </div>
                   <span class="ms-2">{{ user.pengguna.nama }} (Pengguna)</span>
                 </a>
                 {% elif user.pekerja %}
                 <a href="{% url 'main:profile' %}" class="nav-item nav-link d-flex align-items-center">
-                  <img src="{% static 'images/profile_icon.png' %}" class="rounded-circle" height="36">
+                  <img src="{{ user.pekerja.foto_url }}" class="rounded-circle" height="36">
                   <span class="ms-2">{{ user.pekerja.nama }} (Pekerja)</span>
                 </a>
-                <span class="nav-item nav-link">Nama: {{ user.pekerja.nama }} (Pekerja)</span>
                 {% endif %}
                 <a href="{% url 'main:logout_user' %}" class="nav-item nav-link d-flex align-items-center ms-2">Logout</a>
             {% else %}
@@ -55,10 +54,11 @@
     margin-left: 0.5rem;
   }
   .navbar-nav .custom-register-btn {
+    width: 100px;
     background-color: #177E89; /* Initial background color */
     color: white; /* Text color */
     padding: 0.5rem 1rem;
-    border-radius: 0.25rem;
+    border-radius: 2rem;
     text-align: center;
     transition: background-color 0.3s ease; /* Smooth transition */
     text-decoration: none; /* Remove underline */
