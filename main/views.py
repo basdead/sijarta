@@ -50,7 +50,6 @@ def register(request):
                     no_hp=form.cleaned_data['no_hp'],
                     tgl_lahir=form.cleaned_data['tgl_lahir'],
                     alamat=form.cleaned_data['alamat'],
-                    saldomypay=form.cleaned_data['saldomypay'],
                     nama_bank=form.cleaned_data['nama_bank'],
                     no_rekening=form.cleaned_data['no_rekening'],
                     npwp=form.cleaned_data['npwp'],
