@@ -33,7 +33,10 @@
                             {{ user.pengguna.nama|slice:":1" }}
                         </div>
                         {% elif profile.user.pekerja %}
-                        <img src="{{ user.pekerja.foto_url }}" alt="Profile Picture" class="profile-picture" style="width: 216px; height: 216px;">
+                        <img src="{{ user.pekerja.foto_url }}" 
+                            alt="Profile Picture" 
+                            class="profile-picture" 
+                            style="width: 216px; height: 216px; object-fit: cover;">
                         {% endif %}
                     </div>
                     <div class="text-main-info">
@@ -74,9 +77,9 @@
                         </div>
                         <div class = "p_buttons">
                             {% if profile.user.pengguna %}
-                            <button class="edit-profile" onclick="window.location.href='{% url 'main:profile_pengguna' %}'">Update Profile</button>
+                            <button class="edit-profile" onclick="window.location.href='{% url 'main:edit_profile' %}'">Update Profile</button>
                             {% elif profile.user.pekerja %}
-                            <button class="edit-profile" onclick="window.location.href='{% url 'main:profile_pekerja' %}'">Update Profile</button>
+                            <button class="edit-profile" onclick="window.location.href='{% url 'main:edit_profile' %}'">Update Profile</button>
                             {% endif %}
                         </div>
                     </div>
@@ -94,7 +97,7 @@
                         </div>
                     </div>
                     {% elif profile.user.pekerja %}
-                    <div class="addt-infos-contents">
+                    <div class="addt-infos-contents row-1" style="margin-bottom: 1.5rem;">
                         <div class="profile-item">
                             <span><strong>Saldo MyPay</strong></span>
                             <span style="float: right;">{{ additional_attributes.saldomypay }}</span>

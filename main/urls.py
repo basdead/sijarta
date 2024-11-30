@@ -14,8 +14,7 @@ urlpatterns = [
 
     # Profile Management
     path('profile/', views.profile, name='profile'),
-    path('profile/pengguna/', views.profile_pengguna, name='profile_pengguna'),
-    path('profile/pekerja/', views.profile_pekerja, name='profile_pekerja'),
+    path('profile/edit/', views.edit_profile, name='edit_profile'),  # New unified edit path
 
     # Subcategory and Service Sessions
     path('subcategory/<int:subcategory_id>/', views.subcategory_session, name='subcategory_session'),

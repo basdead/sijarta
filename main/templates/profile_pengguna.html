@@ -32,72 +32,94 @@
             </button>
         </div>
     </div>
+
+    <div class="edit-container">
+        <div class="edit-container-content">
+            <div class="edit-profile-area">
+                <div class="form-contents">
+                    <div class="edit-text">
+                        <h1>Edit Profile</h1>
+                    </div>
+                    <form method="post" action="{% url 'main:profile_pengguna' %}">
+                        {% csrf_token %}
+                        <div class="row-one">
+                            <div class="form-group mb-3 other-group">
+                                <label for="{{ form.nama.id_for_label }}">Nama</label>
+                                <div class="w-100">{{ form.nama }}</div>
+                                {% if form.nama.errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.nama.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group mb-3 gender-group">
+                                <label for="{{ form.jenis_kelamin.id_for_label }}">Jenis Kelamin</label>
+                                <div class="gender-buttons w-100">
+                                    <button type="button" class="gender-btn" data-value="L">L</button>
+                                    <button type="button" class="gender-btn" data-value="P">P</button>
+                                </div>
+                                <input type="hidden" name="jenis_kelamin" id="{{ form.jenis_kelamin.id_for_label }}" value="{{ form.jenis_kelamin.value|default:'' }}">
+                                {% if form.jenis_kelamin.errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.jenis_kelamin.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row-two">   
+                            <div class="form-group mb-3">
+                                <label for="{{ form.no_hp.id_for_label }}">No HP</label>
+                                <div class="w-100">{{ form.no_hp }}</div>
+                                {% if form.no_hp.errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.no_hp.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="{{ form.tgl_lahir.id_for_label }}">Tanggal Lahir</label>
+                                <div class="w-100">{{ form.tgl_lahir }}</div>
+                                {% if form.tgl_lahir.errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.tgl_lahir.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="{{ form.alamat.id_for_label }}">Alamat</label>
+                            <div class="w-100">{{ form.alamat }}</div>
+                            {% if form.alamat.errors %}
+                            <div class="alert alert-danger">
+                                {{ form.alamat.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Add other fields similarly, excluding the password field -->
+
+                        <!-- HTML button -->
+                         <div class="button-row">
+                            <button type="submit" class="edit-profile">Update Profile</button>
+                         </div>
+                    </form>
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<h1>Profile Pengguna</h1>
-<form method="post" action="{% url 'main:profile_pengguna' %}">
-    {% csrf_token %}
-    
-    <div class="form-group">
-        {{ form.nama.label_tag }} 
-        {{ form.nama }}
-        {% if form.nama.errors %}
-        <div class="alert alert-danger">
-            {{ form.nama.errors }}
-        </div>
-        {% endif %}
-    </div>
-    
-    <div class="form-group">
-        {{ form.jenis_kelamin.label_tag }} 
-        {{ form.jenis_kelamin }}
-        {% if form.jenis_kelamin.errors %}
-        <div class="alert alert-danger">
-            {{ form.jenis_kelamin.errors }}
-        </div>
-        {% endif %}
-    </div>
-    
-    <div class="form-group">
-        {{ form.no_hp.label_tag }} 
-        {{ form.no_hp }}
-        {% if form.no_hp.errors %}
-        <div class="alert alert-danger">
-            {{ form.no_hp.errors }}
-        </div>
-        {% endif %}
-    </div>
-    
-    <div class="form-group">
-        {{ form.tgl_lahir.label_tag }} 
-        {{ form.tgl_lahir }}
-        {% if form.tgl_lahir.errors %}
-        <div class="alert alert-danger">
-            {{ form.tgl_lahir.errors }}
-        </div>
-        {% endif %}
-    </div>
-    
-    <div class="form-group">
-        {{ form.alamat.label_tag }} 
-        {{ form.alamat }}
-        {% if form.alamat.errors %}
-        <div class="alert alert-danger">
-            {{ form.alamat.errors }}
-        </div>
-        {% endif %}
-    </div>
-    
-    <!-- Add other fields similarly, excluding the password field -->
-    
-    <button type="submit" class="btn btn-primary">Update Profile</button>
-</form>
-
-{% if form.non_field_errors %}
-<div class="alert alert-danger">
-    {{ form.non_field_errors }}
-</div>
-{% endif %}
 
 <style>
     body {
@@ -127,5 +149,245 @@
         flex-direction: row;
         border: none;
     }
+
+    .edit-container {
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #e9f0f1;
+        border-radius: 0.5rem;
+        width: 100%;  /* Added */
+    }
+
+    .edit-container-content {
+        padding: 20px;
+        width: 100%;  /* Added */
+    }
+
+    .horizontal-stack-info {
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .home, .profile, .edit-profile {
+        display: flex;
+        align-items: center;
+    }
+
+    .horizontal-stack-info {
+        display: flex;
+        align-items: center;
+    }
+
+    .edit-profile-area {
+        width: 100%;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .form-contents {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 15px;
+    }
+
+    .form-contents form {
+        width: 100%;  /* Added */
+    }
+
+    .form-group {
+        width: 100%;  /* Added */
+        gap: 3rem;
+    }
+
+    .edit-text h1 {
+        font-size: 48px;
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+
+    /* Add this to your existing CSS */
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 0.6rem 1.2rem;  /* Increased from 0.3rem 0.8rem */
+        border-radius: 2rem;
+        background-color: #e9f0f1;
+        border: none;
+        outline: none;
+    }
+
+    /* Optional: Add hover/focus states to match navigation-button if needed */
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        background-color: #dde5e6;
+    }
+
+    /* If you want to style the select dropdown arrow */
+    .form-group select {
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.8rem center;
+        background-size: 1em;
+    }
+
+    .form-group label {
+        margin-bottom: 0;
+        display: inline-block;
+        font-weight: bold;  /* Added */
+    }
+
+    #id_jenis_kelamin label {
+        font-weight: normal;
+    }
+
+    /* Add these styles to your existing <style> section */
+    .gender-buttons {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .gender-btn {
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        background-color: #e9f0f1;
+        width: fit-content;
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+    .gender-btn:hover {
+        background-color: #177E89;
+        color: white;
+    }
+
+    .gender-btn.active {
+        background-color: #177E89;
+        color: white;
+    }
+
+    .row-one {
+        display: flex;
+        gap: 2rem;
+        width: 100%;
+    }
+
+    .row-one .gender-group {
+        flex: 0 0 8%;
+    }
+    
+    .row-one .other-group {
+        flex: 1; /* Takes equal portions of remaining space */
+    }
+
+    /* Add to your existing <style> section */
+    .row-two {
+        display: flex;
+        gap: 2rem;
+        width: 100%;
+    }
+
+    .w-100, .gender-buttons {
+        margin-top: 0.5rem; /* Standard spacing between label and input */
+    }
+
+    .button-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    /* CSS styles */
+    .edit-profile {
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        background-color: #177E89;
+        color: white;
+        width: fit-content;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .edit-profile:hover {
+        background-color: #084c61;
+    }
 </style>
-{% endblock %}
+
+{% block script %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const genderButtons = document.querySelectorAll('.gender-btn');
+        const hiddenInput = document.querySelector('input[name="jenis_kelamin"]');
+    
+        // Set initial active state
+        if (hiddenInput.value) {
+            const activeButton = document.querySelector(`.gender-btn[data-value="${hiddenInput.value}"]`);
+            if (activeButton) activeButton.classList.add('active');
+        }
+    
+        genderButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Remove active class from all buttons
+                genderButtons.forEach(btn => btn.classList.remove('active'));
+                // Add active class to clicked button
+                this.classList.add('active');
+                // Update hidden input value
+                hiddenInput.value = this.dataset.value;
+            });
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('profile-form');
+        const updateButton = document.getElementById('update-button');
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Disable button to prevent double submission
+            updateButton.disabled = true;
+            
+            // Submit form
+            const formData = new FormData(form);
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = "{% url 'main:profile' %}";
+                } else {
+                    alert('Failed to update profile. Please try again.');
+                    updateButton.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+                updateButton.disabled = false;
+            });
+        });
+    });
+
+    </script>
+{% endblock script %}
+{% endblock content %}
