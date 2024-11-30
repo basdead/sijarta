@@ -24,7 +24,7 @@
             <div class="path">
                 <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
             </div>
-            <button onclick="window.location.href='{% url 'main:profile_pengguna' %}'" class="navigation-button">
+            <button onclick="window.location.href='{% url 'main:edit_profile' %}'" class="navigation-button">
                 <div class="home horizontal-stack-info" style="color: #667a7b;">
                     <img src="https://www.svgrepo.com/show/535558/pencil.svg" alt="Edit Profile" style="width: 15px; height: 15px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
                     <span>Edit Profile</span>
@@ -40,7 +40,7 @@
                     <div class="edit-text">
                         <h1>Edit Profile</h1>
                     </div>
-                    <form method="post" action="{% url 'main:profile_pengguna' %}">
+                    <form method="post" action="{% url 'main:edit_profile' %}">
                         {% csrf_token %}
                         <div class="row-one">
                             <div class="form-group mb-3 other-group">
@@ -70,7 +70,7 @@
 
                         <div class="row-two">   
                             <div class="form-group mb-3">
-                                <label for="{{ form.no_hp.id_for_label }}">No HP</label>
+                                <label for="{{ form.no_hp.id_for_label }}">Nomor HP</label>
                                 <div class="w-100">{{ form.no_hp }}</div>
                                 {% if form.no_hp.errors %}
                                 <div class="alert alert-danger">
