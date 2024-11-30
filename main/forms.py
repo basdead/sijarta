@@ -35,12 +35,21 @@ class PenggunaForm(forms.ModelForm):
             'nama', 'pwd', 'jenis_kelamin', 'no_hp', 'tgl_lahir', 'alamat'
         )
 
+    def __init__(self, *args, **kwargs):
+        super(PenggunaForm, self).__init__(*args, **kwargs)
+        if 'pwd' in self.fields:
+            del self.fields['pwd']
+        # Store the initial no_hp value
+        if self.instance:
+            self.initial_no_hp = self.instance.no_hp
+
     def clean_no_hp(self):
         no_hp = self.cleaned_data.get('no_hp')
-        if Pengguna.objects.filter(no_hp=no_hp).exists():
-            raise forms.ValidationError("No HP sudah terdaftar.")
+        # Only validate if phone number has changed
+        if hasattr(self, 'initial_no_hp') and no_hp != self.initial_no_hp:
+            if Pengguna.objects.filter(no_hp=no_hp).exists():
+                raise forms.ValidationError("No HP sudah terdaftar.")
         return no_hp
-
 
 # Form registrasi untuk Pekerja
 class PekerjaForm(forms.ModelForm):
@@ -68,16 +77,26 @@ class PekerjaForm(forms.ModelForm):
             'nama', 'pwd', 'jenis_kelamin', 'no_hp', 'tgl_lahir', 'alamat','nama_bank', 'no_rekening', 'npwp', 'foto_url'
         )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            self.initial_no_hp = self.instance.no_hp
+            self.initial_npwp = self.instance.npwp
+            self.initial_nama_bank = self.instance.nama_bank
+            self.initial_no_rekening = self.instance.no_rekening
+
     def clean_no_hp(self):
         no_hp = self.cleaned_data.get('no_hp')
-        if Pekerja.objects.filter(no_hp=no_hp).exists():
-            raise forms.ValidationError("No HP sudah terdaftar.")
+        if not self.instance.pk or (hasattr(self, 'initial_no_hp') and no_hp != self.initial_no_hp):
+            if Pekerja.objects.filter(no_hp=no_hp).exists():
+                raise forms.ValidationError("No HP sudah terdaftar.")
         return no_hp
 
     def clean_npwp(self):
         npwp = self.cleaned_data.get('npwp')
-        if Pekerja.objects.filter(npwp=npwp).exists():
-            raise forms.ValidationError("NPWP sudah terdaftar.")
+        if not self.instance.pk or (hasattr(self, 'initial_npwp') and npwp != self.initial_npwp):
+            if Pekerja.objects.filter(npwp=npwp).exists():
+                raise forms.ValidationError("NPWP sudah terdaftar.")
         return npwp
 
     def clean(self):
@@ -85,8 +104,13 @@ class PekerjaForm(forms.ModelForm):
         nama_bank = cleaned_data.get('nama_bank')
         no_rekening = cleaned_data.get('no_rekening')
 
-        if Pekerja.objects.filter(nama_bank=nama_bank, no_rekening=no_rekening).exists():
-            raise forms.ValidationError("Pasangan nama bank dan nomor rekening sudah terdaftar.")
+        if not self.instance.pk or (
+            hasattr(self, 'initial_nama_bank') and
+            hasattr(self, 'initial_no_rekening') and
+            (nama_bank != self.initial_nama_bank or no_rekening != self.initial_no_rekening)
+        ):
+            if Pekerja.objects.filter(nama_bank=nama_bank, no_rekening=no_rekening).exists():
+                raise forms.ValidationError("Pasangan nama bank dan nomor rekening sudah terdaftar.")
         return cleaned_data
 
 # Form untuk Subkategori Jasa

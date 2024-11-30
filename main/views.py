@@ -105,36 +105,6 @@ def logout_user(request):
     return redirect('main:show_home_page')
 
 @login_required
-def profile_pengguna(request):
-    """
-    View and update profile for Pengguna.
-    """
-    pengguna = get_object_or_404(Pengguna, user=request.user)
-    if request.method == 'POST':
-        form = PenggunaForm(request.POST, instance=pengguna)
-        if form.is_valid():
-            form.save()
-            return HttpResponseRedirect(reverse('main:profile'))  # Redirect to profile view
-    else:
-        form = PenggunaForm(instance=pengguna)
-    return render(request, 'profile_pengguna.html', {'form': form})
-    
-@login_required
-def profile_pekerja(request):
-    """
-    View and update profile for Pekerja.
-    """
-    pekerja = get_object_or_404(Pekerja, user=request.user)
-    if request.method == 'POST':
-        form = PekerjaForm(request.POST, instance=pekerja)
-        if form.is_valid():
-            form.save()
-            return HttpResponseRedirect(reverse('main:profile'))
-    else:
-        form = PekerjaForm(instance=pekerja)
-    return render(request, 'profile_pekerja.html', {'form': form})
-
-@login_required
 def profile(request):
     """
     View and update profile based on user role.
@@ -177,6 +147,33 @@ def profile(request):
         'additional_attributes': additional_attributes
     }
 
+    return render(request, template_name, context)
+
+@login_required
+def edit_profile(request):
+    """
+    Unified view for editing both Pengguna and Pekerja profiles
+    """
+    if hasattr(request.user, 'pengguna'):
+        profile = request.user.pengguna
+        form_class = PenggunaForm
+        template_name = 'profile_pengguna.html'
+    elif hasattr(request.user, 'pekerja'):
+        profile = request.user.pekerja
+        form_class = PekerjaForm
+        template_name = 'profile_pekerja.html'
+    else:
+        return redirect('main:show_home_page')
+
+    if request.method == 'POST':
+        form = form_class(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            return redirect('main:profile')
+    else:
+        form = form_class(instance=profile)
+
+    context = {'form': form}
     return render(request, template_name, context)
 
 # Subcategory session view

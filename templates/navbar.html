@@ -36,7 +36,10 @@
                 </a>
                 {% elif user.pekerja %}
                 <a href="{% url 'main:profile' %}" class="nav-item nav-link d-flex align-items-center">
-                  <img src="{{ user.pekerja.foto_url }}" class="rounded-circle" height="36">
+                  <img src="{{ user.pekerja.foto_url }}" 
+                       class="rounded-circle" 
+                       style="width: 36px; height: 36px; object-fit: cover;"
+                       alt="{{ user.pekerja.nama }}'s profile picture">
                   <span class="ms-2">{{ user.pekerja.nama }} (Pekerja)</span>
                 </a>
                 {% endif %}
