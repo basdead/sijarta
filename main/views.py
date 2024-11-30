@@ -169,7 +169,7 @@ def edit_profile(request):
         form = form_class(request.POST, instance=profile)
         if form.is_valid():
             form.save()
-            return redirect('main:profile')
+            return HttpResponseRedirect(reverse('main:profile'))  # Changed this line
     else:
         form = form_class(instance=profile)
 

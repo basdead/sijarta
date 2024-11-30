@@ -78,8 +78,10 @@ class PekerjaForm(forms.ModelForm):
         )
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance.pk:
+        super(PekerjaForm, self).__init__(*args, **kwargs)
+        if 'pwd' in self.fields:
+            del self.fields['pwd']
+        if self.instance:
             self.initial_no_hp = self.instance.no_hp
             self.initial_npwp = self.instance.npwp
             self.initial_nama_bank = self.instance.nama_bank
