@@ -25,7 +25,7 @@ def register(request):
             form = PenggunaForm(request.POST)
             if form.is_valid():
                 user = User.objects.create(username=request.POST['no_hp'])
-                user.set_password(request.POST['pwd'])  # Hash the password securely
+                user.set_password(request.POST['password'])  # Hash the password securely
                 user.save()
                 Pengguna.objects.create(
                     user=user,
@@ -41,7 +41,7 @@ def register(request):
             form = PekerjaForm(request.POST)
             if form.is_valid():
                 user = User.objects.create(username=request.POST['no_hp'])
-                user.set_password(request.POST['pwd'])  # Hash the password securely
+                user.set_password(request.POST['password'])  # Hash the password securely
                 user.save()
                 Pekerja.objects.create(
                     user=user,
