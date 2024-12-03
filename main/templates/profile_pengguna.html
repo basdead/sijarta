@@ -45,12 +45,12 @@
                         <div class="row-one">
                             <div class="form-group mb-3 other-group">
                                 <label for="{{ form.nama.id_for_label }}">Nama</label>
-                                <div class="w-100">{{ form.nama }}</div>
-                                {% if form.nama.errors %}
-                                <div class="alert alert-danger">
-                                    {{ form.nama.errors }}
-                                </div>
-                                {% endif %}
+                                <input type="text" 
+                                       name="{{ form.nama.name }}"
+                                       id="{{ form.nama.id_for_label }}"
+                                       placeholder="Nama"
+                                       class="w-100"
+                                       value="{{ form.nama.value|default:'' }}">
                             </div>
 
                             <div class="form-group mb-3 gender-group">
@@ -71,12 +71,12 @@
                         <div class="row-two">   
                             <div class="form-group mb-3">
                                 <label for="{{ form.no_hp.id_for_label }}">Nomor HP</label>
-                                <div class="w-100">{{ form.no_hp }}</div>
-                                {% if form.no_hp.errors %}
-                                <div class="alert alert-danger">
-                                    {{ form.no_hp.errors }}
-                                </div>
-                                {% endif %}
+                                <input type="text" 
+                                       name="{{ form.no_hp.name }}"
+                                       id="{{ form.no_hp.id_for_label }}"
+                                       placeholder="Nomor HP"
+                                       class="w-100"
+                                       value="{{ form.no_hp.value|default:'' }}">
                             </div>
                             
                             <div class="form-group mb-3">
@@ -92,12 +92,12 @@
                         
                         <div class="form-group mb-3">
                             <label for="{{ form.alamat.id_for_label }}">Alamat</label>
-                            <div class="w-100">{{ form.alamat }}</div>
-                            {% if form.alamat.errors %}
-                            <div class="alert alert-danger">
-                                {{ form.alamat.errors }}
-                            </div>
-                            {% endif %}
+                            <input type="text" 
+                                   name="{{ form.alamat.name }}"
+                                   id="{{ form.alamat.id_for_label }}"
+                                   placeholder="Alamat"
+                                   class="w-100"
+                                   value="{{ form.alamat.value|default:'' }}">
                         </div>
                         
                         <!-- Add other fields similarly, excluding the password field -->
