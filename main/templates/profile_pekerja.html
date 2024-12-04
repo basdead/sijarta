@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Profile Pengguna{% endblock %}
+{% block title %}Edit Profile Pekerja{% endblock %}
 {% block content %}
 {% include 'navbar.html' %}
 <div class="edit-profile-content">
@@ -103,7 +103,17 @@
                         <div class="row-two">   
                             <div class="form-group mb-3">
                                 <label for="{{ form.nama_bank.id_for_label }}">Nama Bank</label>
-                                <div class="w-100">{{ form.nama_bank }}</div>
+                                <select name="{{ form.nama_bank.name }}"
+                                       id="{{ form.nama_bank.id_for_label }}"
+                                       class="w-100"
+                                       required>
+                                    <option value="">Pilih Bank</option>
+                                    {% for value, label in form.nama_bank.field.choices %}
+                                        {% if value != "" %}
+                                            <option value="{{ value }}">{{ label }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
                                 {% if form.nama_bank.errors %}
                                 <div class="alert alert-danger">
                                     {{ form.nama_bank.errors }}
@@ -369,6 +379,34 @@
     .edit-profile:hover {
         background-color: #084c61;
     }
+
+    /* Add styles for select placeholder */
+    :root {
+        --placeholder-color: #999999; /* Define a default placeholder color */
+    }
+
+    select {
+        color: #323031;
+    }
+
+    select option {
+        color: #323031;
+    }
+
+    select option:first-child {
+        color: var(--placeholder-color);
+    }
+
+    /* Style for when no valid option is selected */
+    select:invalid,
+    select option[value=""] {
+        color: var(--placeholder-color);
+    }
+
+    /* Style for actual options */
+    select option:not([value=""]) {
+        color: #323031;
+    }
 </style>
 
 {% block script %}
@@ -425,6 +463,20 @@
         });
     });
 
-    </script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const bankSelect = document.getElementById('{{ form.nama_bank.id_for_label }}');
+        if (bankSelect) {
+            // Set initial color
+            const selectedOption = bankSelect.options[bankSelect.selectedIndex];
+            bankSelect.style.color = selectedOption.value === '' ? 'var(--placeholder-color)' : '#323031';
+            
+            // Update color on change
+            bankSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                this.style.color = selectedOption.value === '' ? 'var(--placeholder-color)' : '#323031';
+            });
+        }
+    });
+</script>
 {% endblock script %}
 {% endblock content %}

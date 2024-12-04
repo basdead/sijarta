@@ -202,13 +202,17 @@
                         <div class="row-two">   
                             <div class="form-group mb-3">
                                 <label for="{{ form.nama_bank.id_for_label }}">Nama Bank</label>
-                                <input type="text" 
-                                       name="{{ form.nama_bank.name }}"
+                                <select name="{{ form.nama_bank.name }}"
                                        id="{{ form.nama_bank.id_for_label }}"
-                                       placeholder="Nama Bank"
                                        class="w-100"
-                                       {% if form.nama_bank.value %}value="{{ form.nama_bank.value }}"{% endif %}
                                        required>
+                                    <option value="">Pilih Bank</option>
+                                    {% for value, label in form.nama_bank.field.choices %}
+                                        {% if value != "" %}
+                                            <option value="{{ value }}">{{ label }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
                                 {% if form.nama_bank.errors %}
                                 <div class="alert alert-danger">
                                     {{ form.nama_bank.errors }}
@@ -278,6 +282,9 @@
 
 <!-- Styles for Register Page -->
 <style>
+    :root {
+        --placeholder-color: #6c757d;
+    }
     body {
         padding-top: 70px; /* Adjust this value based on the height of your navbar */
     }
@@ -436,6 +443,29 @@
         margin-top: 0.5rem; /* Standard spacing between label and input */
     }
 
+    /* Add styles for select placeholder */
+    select {
+        color: #323031;
+    }
+
+    select option {
+        color: #323031;
+    }
+
+    select option:first-child {
+        color: var(--placeholder-color);
+    }
+
+    /* Style for when no valid option is selected */
+    select:invalid,
+    select option[value=""] {
+        color: var(--placeholder-color);
+    }
+
+    /* Style for actual options */
+    select option:not([value=""]) {
+        color: #323031;
+    }
 
     .button-row {
         display: flex;
@@ -483,6 +513,20 @@
                 hiddenInput.value = this.dataset.value;
             });
         });
+
+        // Handle bank selection color
+        const bankSelect = document.getElementById('{{ form.nama_bank.id_for_label }}');
+        if (bankSelect) {
+            // Set initial color
+            const selectedOption = bankSelect.options[bankSelect.selectedIndex];
+            bankSelect.style.color = selectedOption.text === 'Pilih Bank' ? 'var(--placeholder-color)' : '';
+            
+            // Update color on change
+            bankSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                this.style.color = selectedOption.text === 'Pilih Bank' ? 'var(--placeholder-color)' : '';
+            });
+        }
     });
 </script>
 {% endblock %}
