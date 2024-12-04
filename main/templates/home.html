@@ -11,7 +11,26 @@
         <div class="home-container-content">
             <div class="home-area">
                 <div class="filters">
-
+                    <div class="dropdown" style="width: 100%;">
+                        <select name="category"
+                                id="category-dropdown"
+                                class="dropdown-content horizontal-stack-info" 
+                                style="width: 100%; display: flex; justify-content: center; align-items: center; border-radius: 2rem; background-color: #cdddde; outline: none; box-shadow: none; appearance: none; padding: 0px 5px 0px 5px; background-image: url('https://www.svgrepo.com/show/522029/chevron-down.svg'); background-repeat: no-repeat; background-position: right 10px center; background-size: 20px;">
+                            <option value="">Kategori</option>
+                            {% for category in categories %}    
+                                <option value="{{ category.id }}">{{ category.nama_kategori }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="search-area">
+                        <div class="the-search-bar" style="width: 100%;">
+                            <div class="search-content horizontal-stack-info">
+                                <img src="https://www.svgrepo.com/show/479638/search-2.svg" alt="Search" class="search-icon" style="width: 18px; height: 18px;">
+                                <input type="text" placeholder="Cari Subkategori" class="w-100 search-input" style="border: none; background: none; outline: none; color: var(--placeholder-color);">
+                            </div>
+                        </div>
+                        <button type="submit" class="search-button">Search</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -85,8 +104,69 @@
 
     .filters {
         display: flex;
-        gap: 2rem;
+        flex-direction: row;
+        gap: 1rem;
         width: 100%;
+    }
+
+    .dropdown {
+        width: 100%;
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        display: flex;
+        flex-direction: row;
+        background-color: #cdddde;
+    }
+
+    .search-area {
+        display:flex;
+        flex-direction: row;
+        gap: 1rem;
+        width: 100%;
+        flex: 0 0 65%;
+    }
+
+    .the-search-bar {
+        width: 100%;
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        display: flex;
+        flex-direction: row;
+        background-color: #e9f0f1;
+    }
+
+    .dropdown-content {
+        display: flex;
+        align-items: center;
+        position: relative;
+    }
+
+    select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background: none;
+        padding-right: 18px; /* Space for custom chevron */
+        border: none;
+    }
+
+    select:focus {
+        outline: none;
+        box-shadow: none;
+    }
+
+    .search-content {
+        display: flex;
+        align-items: center;
+    }
+
+    .search-content input {
+        font-family: inherit;
+        font-size: inherit;
+    }
+
+    .search-content input::placeholder {
+        color: #6c757d;
     }
 
     .button-container {
@@ -130,6 +210,32 @@
         font-size: 1rem;
         color: #323031;
         font-weight: 800; /* Added font-weight */
+    }
+
+    .search-icon {
+        filter: brightness(0) saturate(100%);
+        opacity: 0.5;
+        transition: all 0.2s ease;
+    }
+    
+    .search-icon.has-text {
+        filter: none;
+        opacity: 1;
+    }
+
+    .search-button {
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        background-color: #177E89;
+        color: white;
+        width: fit-content;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .search-button:hover {
+        background-color: #084c61;
     }
 </style>
 
@@ -184,5 +290,15 @@
         document.body.appendChild(form);
         form.submit();
     }
+
+    // Add search input handler
+    document.querySelector('.search-input').addEventListener('input', function(e) {
+        const searchIcon = this.previousElementSibling;
+        if (this.value.length > 0) {
+            searchIcon.classList.add('has-text');
+        } else {
+            searchIcon.classList.remove('has-text');
+        }
+    });
 </script>
 {% endblock %}

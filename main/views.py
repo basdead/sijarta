@@ -8,6 +8,9 @@ from .models import Pengguna, Pekerja, KategoriJasa, SubkategoriJasa, Order
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
+# Ensure default categories are created
+KategoriJasa.get_default_categories()
+
 # Home page view to display categories and subcategories
 def show_home_page(request):
     """

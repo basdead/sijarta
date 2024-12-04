@@ -66,7 +66,17 @@ class PekerjaForm(forms.ModelForm):
         required=True
     )
     alamat = forms.CharField(max_length=255, required=True)
-    nama_bank = forms.CharField(max_length=50, required=True)
+    nama_bank = forms.ChoiceField(
+        choices=[
+            ('', 'Pilih Bank'),
+            ('GoPay', 'GoPay'),
+            ('OVO', 'OVO'),
+            ('VA BCA', 'Virtual Account BCA'),
+            ('VA BNI', 'Virtual Account BNI'),
+            ('VA Mandiri', 'Virtual Account Mandiri')
+        ],
+        required=True
+    )
     no_rekening = forms.CharField(max_length=20, required=True)
     npwp = forms.CharField(max_length=15, required=True)
     foto_url = forms.URLField(required=True)
