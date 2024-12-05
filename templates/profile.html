@@ -14,7 +14,7 @@
             <div class="path">
                 <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
             </div>
-            <button onclick="window.location.href='{% url 'main:profile' %}'" class="navigation-button">
+            <button onclick="window.location.href='{% url 'profil:profile' %}'" class="navigation-button">
                 <div class="home horizontal-stack-info" style="color: #667a7b;">
                     <img src="https://www.svgrepo.com/show/483464/person.svg" alt="Profile" style="width: 15px; height: 15px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
                     <span>Profile</span>
@@ -71,9 +71,9 @@
                         </div>
                         <div class = "p_buttons">
                             {% if request.session.user_type == 'pelanggan' %}
-                            <button class="edit-profile" onclick="window.location.href='{% url 'main:edit_profile' %}'">Update Profile</button>
+                            <button class="edit-profile" onclick="window.location.href='{% url 'profil:edit_profile' %}'">Update Profile</button>
                             {% elif request.session.user_type == 'pekerja' %}
-                            <button class="edit-profile" onclick="window.location.href='{% url 'main:edit_profile' %}'">Update Profile</button>
+                            <button class="edit-profile" onclick="window.location.href='{% url 'profil:edit_profile' %}'">Update Profile</button>
                             {% endif %}
                         </div>
                     </div>
