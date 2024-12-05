@@ -11,13 +11,13 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarCollapse">
         <div class="navbar-nav">
-            {% if user.is_authenticated %}
-                {% if user.pengguna %}
+            {% if request.session.is_authenticated %}
+                {% if request.session.user_type == 'pelanggan' %}
                     <a href="{% url 'main:show_home_page' %}" class="nav-item nav-link active">Homepage</a>
                     <a href="" class="nav-item nav-link">MyPay</a>
                     <a href="{% url 'main:view_orders' %}" class="nav-item nav-link">Kelola Pesanan Saya</a>
                     <a href="" class="nav-item nav-link">Diskon</a>
-                {% elif user.pekerja %}
+                {% elif request.session.user_type == 'pekerja' %}
                     <a href="{% url 'main:show_home_page' %}" class="nav-item nav-link active">Homepage</a>
                     <a href="" class="nav-item nav-link">Kelola Pekerjaan Saya</a>
                     <a href="" class="nav-item nav-link">Kelola Status Pekerjaan</a>
@@ -26,21 +26,21 @@
             {% endif %}
         </div>
         <div class="navbar-nav ms-auto">
-            {% if user.is_authenticated %}
-                {% if user.pengguna %}
+            {% if request.session.is_authenticated %}
+                {% if request.session.user_type == 'pelanggan' %}
                 <a href="{% url 'main:profile' %}" class="nav-item nav-link d-flex align-items-center">
                     <div class="rounded-circle d-flex justify-content-center align-items-center" style="width: 36px; height: 36px; background-color: #177E89; color: white; font-weight: bold; font-size: 1rem;">
-                      {{ user.pengguna.nama|slice:":1" }}
+                      {{ request.session.user_name|slice:":1" }}
                     </div>
-                  <span class="ms-2">{{ user.pengguna.nama }} (Pengguna)</span>
+                  <span class="ms-2">{{ request.session.user_name }} (Pengguna)</span>
                 </a>
-                {% elif user.pekerja %}
+                {% elif request.session.user_type == 'pekerja' %}
                 <a href="{% url 'main:profile' %}" class="nav-item nav-link d-flex align-items-center">
-                  <img src="{{ user.pekerja.foto_url }}" 
+                  <img src="{{ additional_attributes.foto_url }}" 
                        class="rounded-circle" 
                        style="width: 36px; height: 36px; object-fit: cover;"
-                       alt="{{ user.pekerja.nama }}'s profile picture">
-                  <span class="ms-2">{{ user.pekerja.nama }} (Pekerja)</span>
+                       alt="{{ request.session.user_name }}'s profile picture">
+                  <span class="ms-2">{{ request.session.user_name }} (Pekerja)</span>
                 </a>
                 {% endif %}
                 <a href="{% url 'main:logout_user' %}" class="nav-item nav-link d-flex align-items-center ms-2">Logout</a>
@@ -58,18 +58,18 @@
   }
   .navbar-nav .custom-register-btn {
     width: 100px;
-    background-color: #177E89; /* Initial background color */
-    color: white; /* Text color */
+    background-color: #177E89;
+    color: white;
     padding: 0.5rem 1rem;
     border-radius: 2rem;
     text-align: center;
-    transition: background-color 0.3s ease; /* Smooth transition */
-    text-decoration: none; /* Remove underline */
+    transition: background-color 0.3s ease;
+    text-decoration: none;
   }
 
   .navbar-nav .custom-register-btn:hover {
-      background-color: #084c61; /* Hover background color */
-      color: white; /* Text color stays white */
+      background-color: #084c61;
+      color: white;
   }
 
   .navbar-nav .nav-link {

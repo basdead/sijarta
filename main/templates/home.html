@@ -5,7 +5,7 @@
 {% include 'navbar.html' %}
 {% include 'register_modal.html' %}
 
-{% if user.is_authenticated %}
+{% if request.session.is_authenticated %}
 <div class="home-content-authenticated">
     <div class="home-container">
         <div class="home-container-content">

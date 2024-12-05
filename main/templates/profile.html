@@ -28,27 +28,21 @@
             <div class="profile-info">
                 <div class="main-info horizontal-stack">
                     <div class="avatar">
-                        {% if profile.user.pengguna %}
+                        {% if request.session.user_type == 'pelanggan' %}
                         <div class="profile-picture" style="width: 216px; height: 216px; background-color: #177E89; color: white; font-weight: bold; display: flex; justify-content: center; align-items: center; font-size: 6rem;">
-                            {{ user.pengguna.nama|slice:":1" }}
+                            {{ request.session.user_name|slice:":1" }}
                         </div>
-                        {% elif profile.user.pekerja %}
-                        <img src="{{ user.pekerja.foto_url }}" 
+                        {% elif request.session.user_type == 'pekerja' %}
+                        <img src="{{ profile.foto_url }}" 
                             alt="Profile Picture" 
                             class="profile-picture" 
                             style="width: 216px; height: 216px; object-fit: cover;">
                         {% endif %}
                     </div>
                     <div class="text-main-info">
-                        {% if profile.user.pengguna %}
                         <div class="username">
-                            <h1>{{ user.pengguna.nama }}</h1>
+                            <h1>{{ request.session.user_name }}</h1>
                         </div>
-                        {% elif profile.user.pekerja %}
-                        <div class="username">
-                            <h1>{{ user.pekerja.nama }}</h1>
-                        </div>
-                        {% endif %}
                         <div class="mini-infos">
                             <div class="mini-info">
                                 <div class="gender-info horizontal-stack-info">
@@ -76,16 +70,16 @@
                             </div>
                         </div>
                         <div class = "p_buttons">
-                            {% if profile.user.pengguna %}
+                            {% if request.session.user_type == 'pelanggan' %}
                             <button class="edit-profile" onclick="window.location.href='{% url 'main:edit_profile' %}'">Update Profile</button>
-                            {% elif profile.user.pekerja %}
+                            {% elif request.session.user_type == 'pekerja' %}
                             <button class="edit-profile" onclick="window.location.href='{% url 'main:edit_profile' %}'">Update Profile</button>
                             {% endif %}
                         </div>
                     </div>
                 </div>
                 <div class="additional-info">
-                    {% if profile.user.pengguna %}
+                    {% if request.session.user_type == 'pelanggan' %}
                     <div class="addt-infos-contents">
                         <div class="profile-item">
                             <span><strong>Saldo MyPay</strong></span>
@@ -96,7 +90,7 @@
                             <span style="float: right;">{{ additional_attributes.level }}</span>
                         </div>
                     </div>
-                    {% elif profile.user.pekerja %}
+                    {% elif request.session.user_type == 'pekerja' %}
                     <div class="addt-infos-contents row-1" style="margin-bottom: 1.5rem;">
                         <div class="profile-item">
                             <span><strong>Saldo MyPay</strong></span>
