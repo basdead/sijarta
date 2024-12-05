@@ -40,7 +40,7 @@
                     <div class="edit-text">
                         <h1>Edit Profile</h1>
                     </div>
-                    <form method="post" action="{% url 'main:edit_profile' %}">
+                    <form id="profile-form" method="post" action="{% url 'main:edit_profile' %}">
                         {% csrf_token %}
                         <div class="row-one">
                             <div class="form-group mb-3 other-group">
@@ -355,39 +355,39 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('profile-form');
-        const updateButton = document.getElementById('update-button');
-
+        
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Disable button to prevent double submission
-            updateButton.disabled = true;
+            const formData = new FormData(this);
             
-            // Submit form
-            const formData = new FormData(form);
-            fetch(form.action, {
+            // Log form data for debugging
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
+            
+            fetch('{% url "main:edit_profile" %}', {
                 method: 'POST',
                 body: formData,
-                headers: {
-                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-                }
+                credentials: 'same-origin'  // This is important for CSRF
             })
             .then(response => {
-                if (response.ok) {
-                    window.location.href = "{% url 'main:profile' %}";
-                } else {
-                    alert('Failed to update profile. Please try again.');
-                    updateButton.disabled = false;
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(text);
+                    });
                 }
+                return response;
+            })
+            .then(response => {
+                window.location.href = '{% url "main:profile" %}';
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred. Please try again.');
-                updateButton.disabled = false;
+                alert('Failed to update profile. Please try again.');
             });
         });
     });
-
-    </script>
+</script>
 {% endblock script %}
 {% endblock content %}
