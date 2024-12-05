@@ -12,10 +12,6 @@ urlpatterns = [
     path('login/', views.login_user, name='login_user'),
     path('logout/', views.logout_user, name='logout_user'),
 
-    # Profile Management
-    path('profile/', views.profile, name='profile'),
-    path('profile/edit/', views.edit_profile, name='edit_profile'),  # New unified edit path
-
     # Subcategory and Service Sessions
     path('subcategory/<int:subcategory_id>/', views.subcategory_session, name='subcategory_session'),
 
