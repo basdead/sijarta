@@ -1,23 +1,23 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.models import User
 from django.db import transaction
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+import logging
 from .forms import RoleSelectionForm, PenggunaForm, PekerjaForm, SubkategoriForm, OrderForm
-from .models import Pengguna, Pekerja, KategoriJasa, SubkategoriJasa, Order
 from django.http import HttpResponseRedirect
 from django.urls import reverse
+from utils.query import *
+import uuid
 
-# Ensure default categories are created
-KategoriJasa.get_default_categories()
+logger = logging.getLogger(__name__)
 
 # Home page view to display categories and subcategories
 def show_home_page(request):
     """
     Display the home page with all categories and their subcategories.
     """
-    categories = KategoriJasa.objects.prefetch_related('subkategori').all()
-    return render(request, 'home.html', {'categories': categories})
+    return render(request, 'home.html')
 
 @transaction.atomic
 def register(request):
@@ -27,39 +27,85 @@ def register(request):
         if role == 'pengguna':
             form = PenggunaForm(request.POST)
             if form.is_valid():
-                user = User.objects.create(username=request.POST['no_hp'])
-                user.set_password(request.POST['password'])  # Hash the password securely
-                user.save()
-                Pengguna.objects.create(
-                    user=user,
-                    nama=form.cleaned_data['nama'],
-                    jenis_kelamin=form.cleaned_data['jenis_kelamin'],
-                    no_hp=form.cleaned_data['no_hp'],
-                    tgl_lahir=form.cleaned_data['tgl_lahir'],
-                    alamat=form.cleaned_data['alamat']
-                )
-                login(request, user)
-                return redirect('main:show_home_page')
+                connection, cursor = get_db_connection()
+                if connection is None or cursor is None:
+                    logger.error('Database connection failed during pengguna registration')
+                    messages.error(request, 'Database connection failed')
+                else:
+                    try:
+                        cursor.execute(
+                            'INSERT INTO "PENGGUNA" (id, nama, pwd, jenis_kelamin, no_hp, tgl_lahir, alamat, saldomypay, level) '
+                            'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)',
+                            (
+                                str(uuid.uuid4()),  # Generate UUID for pengguna
+                                form.cleaned_data['nama'],
+                                form.cleaned_data['pwd'],
+                                form.cleaned_data['jenis_kelamin'],
+                                form.cleaned_data['no_hp'],
+                                form.cleaned_data['tgl_lahir'],
+                                form.cleaned_data['alamat'],
+                                0.00,  # default saldomypay
+                                'basic'  # default level
+                            )
+                        )
+                        connection.commit()
+                        logger.info('Successfully registered new pengguna')
+                        return redirect('main:login_user')
+                    except Exception as error:
+                        connection.rollback()
+                        error_message = str(error).split('CONTEXT')[0]
+                        logger.error(f'Error during pengguna registration: {error_message}')
+                        messages.error(request, error_message)
+                    finally:
+                        cursor.close()
+                        connection.close()
+            else:
+                logger.error(f'Form validation failed: {form.errors}')
+                messages.error(request, 'Please check your input and try again')
         elif role == 'pekerja':
             form = PekerjaForm(request.POST)
             if form.is_valid():
-                user = User.objects.create(username=request.POST['no_hp'])
-                user.set_password(request.POST['password'])  # Hash the password securely
-                user.save()
-                Pekerja.objects.create(
-                    user=user,
-                    nama=form.cleaned_data['nama'],
-                    jenis_kelamin=form.cleaned_data['jenis_kelamin'],
-                    no_hp=form.cleaned_data['no_hp'],
-                    tgl_lahir=form.cleaned_data['tgl_lahir'],
-                    alamat=form.cleaned_data['alamat'],
-                    nama_bank=form.cleaned_data['nama_bank'],
-                    no_rekening=form.cleaned_data['no_rekening'],
-                    npwp=form.cleaned_data['npwp'],
-                    foto_url=form.cleaned_data['foto_url']
-                )
-                login(request, user)
-                return redirect('main:show_home_page')
+                connection, cursor = get_db_connection()
+                if connection is None or cursor is None:
+                    logger.error('Database connection failed during pekerja registration')
+                    messages.error(request, 'Database connection failed')
+                else:
+                    try:
+                        cursor.execute(
+                            'INSERT INTO "PEKERJA" (id, nama, pwd, jenis_kelamin, no_hp, tgl_lahir, alamat, '
+                            'saldomypay, nama_bank, no_rekening, npwp, foto_url, rating, jumlah_pesanan_selesai) '
+                            'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+                            (
+                                str(uuid.uuid4()),  # Generate UUID for pekerja
+                                form.cleaned_data['nama'],
+                                form.cleaned_data['pwd'],
+                                form.cleaned_data['jenis_kelamin'],
+                                form.cleaned_data['no_hp'],
+                                form.cleaned_data['tgl_lahir'],
+                                form.cleaned_data['alamat'],
+                                0.00,  # default saldomypay
+                                form.cleaned_data['nama_bank'],
+                                form.cleaned_data['no_rekening'],
+                                form.cleaned_data['npwp'],
+                                form.cleaned_data['foto_url'],
+                                0.00,  # default rating
+                                0  # default jumlah_pesanan_selesai
+                            )
+                        )
+                        connection.commit()
+                        logger.info('Successfully registered new pekerja')
+                        return redirect('main:login_user')
+                    except Exception as error:
+                        connection.rollback()
+                        error_message = str(error).split('CONTEXT')[0]
+                        logger.error(f'Error during pekerja registration: {error_message}')
+                        messages.error(request, error_message)
+                    finally:
+                        cursor.close()
+                        connection.close()
+            else:
+                logger.error(f'Form validation failed: {form.errors}')
+                messages.error(request, 'Please check your input and try again')
     else:
         if role == 'pengguna':
             form = PenggunaForm()
@@ -78,23 +124,36 @@ def login_user(request):
     if request.method == 'POST':
         no_hp = request.POST.get('no_hp')
         password = request.POST.get('password')
-        user = None
-
-        try:
-            pengguna = Pengguna.objects.get(no_hp=no_hp)
-            user = pengguna.user
-        except Pengguna.DoesNotExist:
-            try:
-                pekerja = Pekerja.objects.get(no_hp=no_hp)
-                user = pekerja.user
-            except Pekerja.DoesNotExist:
-                user = None
-
-        if user and user.check_password(password):
-            login(request, user)
-            return redirect('main:show_home_page')  # Redirect to the homepage
+        
+        connection, cursor = get_db_connection()
+        if connection is None or cursor is None:
+            logger.error('Database connection failed during login')
+            messages.error(request, 'Database connection failed')
         else:
-            return render(request, 'login.html', {'error': 'Invalid No HP or password'})
+            try:
+                # Try to find user in PENGGUNA table
+                cursor.execute('SELECT * FROM "PENGGUNA" WHERE no_hp = %s AND pwd = %s', (no_hp, password))
+                user = cursor.fetchone()
+                
+                if user is None:
+                    # If not in PENGGUNA, try PEKERJA table
+                    cursor.execute('SELECT * FROM "PEKERJA" WHERE no_hp = %s AND pwd = %s', (no_hp, password))
+                    user = cursor.fetchone()
+                
+                if user is None:
+                    logger.error('Invalid No HP or password')
+                    messages.error(request, 'Invalid No HP or password')
+                    return redirect('main:login_user')
+                else:
+                    return redirect('main:show_home_page')
+                    
+            except Exception as error:
+                error_message = str(error).split('CONTEXT')[0]
+                logger.error(f'Error during login: {error_message}')
+                messages.error(request, error_message)
+            finally:
+                cursor.close()
+                connection.close()
 
     return render(request, 'login.html')
 

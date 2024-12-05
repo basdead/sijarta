@@ -48,17 +48,17 @@
                         </div>
 
                         <div class="form-group mb-3">
-                            <label for="password">Password</label>
+                            <label for="{{ form.pwd.id_for_label }}">Password</label>
                             <input type="password" 
-                                   id="password" 
-                                   name="password" 
+                                   id="{{ form.pwd.id_for_label }}" 
+                                   name="{{ form.pwd.name }}" 
                                    placeholder="Password" 
                                    class="w-100"
                                    autocomplete="new-password"
                                    required>
-                            {% if form.password.errors %}
+                            {% if form.pwd.errors %}
                             <div class="alert alert-danger">
-                                {{ form.password.errors }}
+                                {{ form.pwd.errors }}
                             </div>
                             {% endif %}
                         </div>
@@ -140,17 +140,17 @@
                         </div>
 
                         <div class="form-group mb-3">
-                            <label for="password">Password</label>
+                            <label for="{{ form.pwd.id_for_label }}">Password</label>
                             <input type="password" 
-                                   id="password" 
-                                   name="password" 
+                                   id="{{ form.pwd.id_for_label }}" 
+                                   name="{{ form.pwd.name }}" 
                                    placeholder="Password" 
                                    class="w-100"
                                    autocomplete="new-password"
                                    required>
-                            {% if form.password.errors %}
+                            {% if form.pwd.errors %}
                             <div class="alert alert-danger">
-                                {{ form.password.errors }}
+                                {{ form.pwd.errors }}
                             </div>
                             {% endif %}
                         </div>
