@@ -11,7 +11,7 @@ def get_db_connection():
             database = 'postgres'
         )
         cursor = connection.cursor()
-        cursor.execute('SET search_path TO "SIJARTA";')
+        cursor.execute('SET search_path TO SIJARTA;')
         return connection, cursor
     except (Exception, Error) as error:
         print("Error while connecting to PostgreSQL", error)
