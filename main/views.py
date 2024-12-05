@@ -24,88 +24,79 @@ def register(request):
     role = request.GET.get('role')
     if request.method == 'POST':
         role = request.POST.get('role')
-        if role == 'pengguna':
-            form = PenggunaForm(request.POST)
-            if form.is_valid():
-                connection, cursor = get_db_connection()
-                if connection is None or cursor is None:
-                    logger.error('Database connection failed during pengguna registration')
-                    messages.error(request, 'Database connection failed')
-                else:
-                    try:
-                        cursor.execute(
-                            'INSERT INTO "PENGGUNA" (id, nama, pwd, jenis_kelamin, no_hp, tgl_lahir, alamat, saldomypay, level) '
-                            'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)',
-                            (
-                                str(uuid.uuid4()),  # Generate UUID for pengguna
-                                form.cleaned_data['nama'],
-                                form.cleaned_data['pwd'],
-                                form.cleaned_data['jenis_kelamin'],
-                                form.cleaned_data['no_hp'],
-                                form.cleaned_data['tgl_lahir'],
-                                form.cleaned_data['alamat'],
-                                0.00,  # default saldomypay
-                                'basic'  # default level
-                            )
+        logger.info(f"POST data received: {request.POST}")
+        
+        if not role:
+            messages.error(request, 'Role is required')
+            return redirect('main:register')
+            
+        form = PenggunaForm(request.POST) if role == 'pengguna' else PekerjaForm(request.POST)
+        logger.info(f"Form data: {form.data}")
+        logger.info(f"Form errors: {form.errors}")
+        
+        if form.is_valid():
+            connection, cursor = get_db_connection()
+            if connection is None or cursor is None:
+                logger.error('Database connection failed during registration')
+                messages.error(request, 'Database connection failed')
+                return redirect('main:register')
+                
+            try:
+                # Generate UUID for the new user
+                user_id = str(uuid.uuid4())
+                
+                # First, insert into USER table
+                cursor.execute(
+                    'INSERT INTO "USER" (id, nama, pwd, jeniskelamin, nohp, tgllahir, alamat, saldomypay) '
+                    'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
+                    (
+                        user_id,
+                        form.cleaned_data['nama'],
+                        form.cleaned_data['pwd'],
+                        form.cleaned_data['jenis_kelamin'],
+                        form.cleaned_data['no_hp'],
+                        form.cleaned_data['tgl_lahir'],
+                        form.cleaned_data['alamat'],
+                        0.00  # default saldomypay
+                    )
+                )
+                
+                # Then, insert into role-specific table
+                if role == 'pengguna':
+                    cursor.execute(
+                        'INSERT INTO PELANGGAN (id, level) VALUES (%s, %s)',
+                        (user_id, 'Basic')
+                    )
+                else:  # pekerja
+                    cursor.execute(
+                        'INSERT INTO PEKERJA (id, nama_bank, no_rekening, npwp, foto_url, rating, jumlah_pesanan_selesai) '
+                        'VALUES (%s, %s, %s, %s, %s, %s, %s)',
+                        (
+                            user_id,
+                            form.cleaned_data['nama_bank'],
+                            form.cleaned_data['no_rekening'],
+                            form.cleaned_data['npwp'],
+                            form.cleaned_data['foto_url'],
+                            0.00,  # default rating
+                            0  # default jumlah_pesanan_selesai
                         )
-                        connection.commit()
-                        logger.info('Successfully registered new pengguna')
-                        return redirect('main:login_user')
-                    except Exception as error:
-                        connection.rollback()
-                        error_message = str(error).split('CONTEXT')[0]
-                        logger.error(f'Error during pengguna registration: {error_message}')
-                        messages.error(request, error_message)
-                    finally:
-                        cursor.close()
-                        connection.close()
-            else:
-                logger.error(f'Form validation failed: {form.errors}')
-                messages.error(request, 'Please check your input and try again')
-        elif role == 'pekerja':
-            form = PekerjaForm(request.POST)
-            if form.is_valid():
-                connection, cursor = get_db_connection()
-                if connection is None or cursor is None:
-                    logger.error('Database connection failed during pekerja registration')
-                    messages.error(request, 'Database connection failed')
-                else:
-                    try:
-                        cursor.execute(
-                            'INSERT INTO "PEKERJA" (id, nama, pwd, jenis_kelamin, no_hp, tgl_lahir, alamat, '
-                            'saldomypay, nama_bank, no_rekening, npwp, foto_url, rating, jumlah_pesanan_selesai) '
-                            'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
-                            (
-                                str(uuid.uuid4()),  # Generate UUID for pekerja
-                                form.cleaned_data['nama'],
-                                form.cleaned_data['pwd'],
-                                form.cleaned_data['jenis_kelamin'],
-                                form.cleaned_data['no_hp'],
-                                form.cleaned_data['tgl_lahir'],
-                                form.cleaned_data['alamat'],
-                                0.00,  # default saldomypay
-                                form.cleaned_data['nama_bank'],
-                                form.cleaned_data['no_rekening'],
-                                form.cleaned_data['npwp'],
-                                form.cleaned_data['foto_url'],
-                                0.00,  # default rating
-                                0  # default jumlah_pesanan_selesai
-                            )
-                        )
-                        connection.commit()
-                        logger.info('Successfully registered new pekerja')
-                        return redirect('main:login_user')
-                    except Exception as error:
-                        connection.rollback()
-                        error_message = str(error).split('CONTEXT')[0]
-                        logger.error(f'Error during pekerja registration: {error_message}')
-                        messages.error(request, error_message)
-                    finally:
-                        cursor.close()
-                        connection.close()
-            else:
-                logger.error(f'Form validation failed: {form.errors}')
-                messages.error(request, 'Please check your input and try again')
+                    )
+                
+                connection.commit()
+                logger.info(f'Successfully registered new {role}')
+                return redirect('main:show_home_page')
+                
+            except Exception as error:
+                connection.rollback()
+                error_message = str(error).split('CONTEXT')[0]
+                logger.error(f'Error during {role} registration: {error_message}')
+                messages.error(request, error_message)
+            finally:
+                cursor.close()
+                connection.close()
+        else:
+            logger.error(f'Form validation failed: {form.errors}')
+            messages.error(request, 'Please check your input and try again')
     else:
         if role == 'pengguna':
             form = PenggunaForm()
@@ -132,12 +123,12 @@ def login_user(request):
         else:
             try:
                 # Try to find user in PENGGUNA table
-                cursor.execute('SELECT * FROM "PENGGUNA" WHERE no_hp = %s AND pwd = %s', (no_hp, password))
+                cursor.execute('SELECT * FROM PELANGGAN WHERE no_hp = %s AND pwd = %s', (no_hp, password))
                 user = cursor.fetchone()
                 
                 if user is None:
                     # If not in PENGGUNA, try PEKERJA table
-                    cursor.execute('SELECT * FROM "PEKERJA" WHERE no_hp = %s AND pwd = %s', (no_hp, password))
+                    cursor.execute('SELECT * FROM PEKERJA WHERE no_hp = %s AND pwd = %s', (no_hp, password))
                     user = cursor.fetchone()
                 
                 if user is None:
@@ -231,7 +222,7 @@ def edit_profile(request):
         form = form_class(request.POST, instance=profile)
         if form.is_valid():
             form.save()
-            return HttpResponseRedirect(reverse('main:profile'))  # Changed this line
+            return HttpResponseRedirect(reverse('main:profile'))  
     else:
         form = form_class(instance=profile)
 
@@ -319,7 +310,7 @@ def create_subcategory(request):
         form = SubkategoriForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('main:show_home_page')  # Arahkan kembali ke halaman utama setelah sukses
+            return redirect('main:show_home_page')  
     else:
         form = SubkategoriForm()
     
@@ -336,7 +327,7 @@ def update_subcategory(request, subcategory_id):
         form = SubkategoriForm(request.POST, instance=subkategori)
         if form.is_valid():
             form.save()
-            return redirect('main:show_home_page')  # Arahkan kembali ke halaman utama setelah sukses
+            return redirect('main:show_home_page')  
     else:
         form = SubkategoriForm(instance=subkategori)
 
@@ -350,7 +341,7 @@ def delete_subcategory(request, subcategory_id):
     subkategori = get_object_or_404(SubkategoriJasa, id=subcategory_id)
 
     # Pastikan hanya admin atau pengguna tertentu yang dapat menghapus
-    if not request.user.is_staff:  # Contoh aturan, hanya admin
+    if not request.user.is_staff:  
         return redirect('main:show_home_page')
 
     if request.method == 'POST':

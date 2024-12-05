@@ -14,6 +14,7 @@
                     </div>
                     <form method="post" action="{% url 'main:register' %}">
                         {% csrf_token %}
+                        <input type="hidden" name="role" value="{{ role }}">
                         {% if role == 'pengguna' %}
                         <div class="row-one">
                             <div class="form-group mb-3 other-group">
@@ -269,7 +270,6 @@
                             {% endif %}
                         </div>
                         {% endif %}
-                        <input type="hidden" name="role" value="{{ role }}">
                         <div class="button-row">
                             <button type="submit" class="register-button">Register</button>
                          </div>
