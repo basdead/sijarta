@@ -26,11 +26,27 @@
                         <div class="the-search-bar" style="width: 100%;">
                             <div class="search-content horizontal-stack-info">
                                 <img src="https://www.svgrepo.com/show/479638/search-2.svg" alt="Search" class="search-icon" style="width: 18px; height: 18px;">
-                                <input type="text" placeholder="Cari Subkategori" class="w-100 search-input" style="border: none; background: none; outline: none; color: var(--placeholder-color);">
+                                <input type="text" id="search-input" placeholder="Cari Subkategori" class="w-100 search-input" style="border: none; background: none; outline: none; color: var(--placeholder-color);">
                             </div>
                         </div>
-                        <button type="submit" class="search-button">Search</button>
+                        <button type="button" id="search-button" class="search-button">Search</button>
                     </div>
+                </div>
+                <div class="category-cards">
+                    {% for category in categories %}
+                    <div class="category-card" data-category-id="{{ category.id }}">
+                        <div class="category-card-header">
+                            <strong>{{ category.nama_kategori }}</strong>
+                        </div>
+                        <div class="category-card-content">
+                            {% for subcategory in category.subcategories %}
+                            <div class="subcategory">
+                                <span>{{ subcategory.nama_subkategori }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -93,13 +109,14 @@
 
     .home-area {
         width: 100%;
-        padding: 20px;
+        padding: 30px;
         background-color: #f8f9fa;
         border-radius: 0.5rem;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
+        gap: 2rem;
     }
 
     .filters {
@@ -237,11 +254,115 @@
     .search-button:hover {
         background-color: #084c61;
     }
+
+    .category-cards {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .category-card {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .category-card-header {
+        padding: 10px 20px;
+        margin-bottom: 0;
+        background-color:#177E89;
+        color: white;
+        border-radius: 0.5rem 0.5rem 0rem 0rem;
+        font-size: 16px;
+    }
+
+    .category-card-content {
+        padding: 20px;
+        margin-bottom: 0;
+        background-color:#cdddde;
+        border-radius: 0rem 0rem 0.5rem 0.5rem;
+        font-size: 16px;
+    }
+
+    .subcategory {
+        width: 100%;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 1rem;
+    }
+
+    .subcategory:last-child {
+        margin-bottom: 0;
+    }
 </style>
 
 <!-- JavaScript -->
 <script>
     const modal = document.getElementById("registerModal");
+    const categoryDropdown = document.getElementById("category-dropdown");
+    const categoryCards = document.querySelectorAll(".category-card");
+    const searchInput = document.getElementById("search-input");
+    const searchButton = document.getElementById("search-button");
+
+    // Function to perform search
+    function performSearch() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const selectedCategoryId = categoryDropdown.value;
+
+        categoryCards.forEach(card => {
+            const subcategories = card.querySelectorAll('.subcategory');
+            let hasMatchingSubcategory = false;
+            let visibleSubcategories = 0;
+
+            // First hide all subcategories
+            subcategories.forEach(sub => {
+                const subcategoryText = sub.textContent.toLowerCase().trim();
+                if (searchTerm === '' || subcategoryText.includes(searchTerm)) {
+                    sub.style.display = 'flex';
+                    hasMatchingSubcategory = true;
+                    visibleSubcategories++;
+                } else {
+                    sub.style.display = 'none';
+                }
+            });
+
+            // Show/hide the category card based on search results and dropdown selection
+            if ((!selectedCategoryId || card.getAttribute('data-category-id') === selectedCategoryId) 
+                && (searchTerm === '' || hasMatchingSubcategory)) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+
+            // If no subcategories are visible, hide the card
+            if (visibleSubcategories === 0) {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    // Filter categories based on dropdown selection
+    categoryDropdown.addEventListener('change', performSearch);
+
+    // Search in real-time as user types
+    searchInput.addEventListener('input', function(e) {
+        const searchIcon = this.previousElementSibling;
+        if (this.value.length > 0) {
+            searchIcon.classList.add('has-text');
+        } else {
+            searchIcon.classList.remove('has-text');
+        }
+        performSearch();
+    });
+
+    // Keep the search button for mobile users
+    searchButton.addEventListener('click', performSearch);
 
     // Open modal
     function openModal() {
@@ -290,15 +411,5 @@
         document.body.appendChild(form);
         form.submit();
     }
-
-    // Add search input handler
-    document.querySelector('.search-input').addEventListener('input', function(e) {
-        const searchIcon = this.previousElementSibling;
-        if (this.value.length > 0) {
-            searchIcon.classList.add('has-text');
-        } else {
-            searchIcon.classList.remove('has-text');
-        }
-    });
 </script>
 {% endblock %}
