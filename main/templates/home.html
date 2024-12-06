@@ -40,7 +40,7 @@
                         </div>
                         <div class="category-card-content">
                             {% for subcategory in category.subcategories %}
-                            <div class="subcategory">
+                            <div class="subcategory" onclick="window.location.href='/subcategory/' + encodeURIComponent('{{ subcategory.nama_subkategori }}'.replace(/ /g, '-'))" style="cursor: pointer;">
                                 <span>{{ subcategory.nama_subkategori }}</span>
                             </div>
                             {% endfor %}
@@ -295,6 +295,11 @@
         display: flex;
         flex-direction: column;
         margin-bottom: 1rem;
+        transition: background-color 0.3s ease;
+    }
+
+    .subcategory:hover {
+        background-color: #e9ecef;
     }
 
     .subcategory:last-child {
@@ -309,6 +314,10 @@
     const categoryCards = document.querySelectorAll(".category-card");
     const searchInput = document.getElementById("search-input");
     const searchButton = document.getElementById("search-button");
+
+    function formatSubcategoryName(name) {
+        return name.replace(/\s+/g, '-');
+    }
 
     // Function to perform search
     function performSearch() {
