@@ -31,17 +31,43 @@ def show_home_page(request):
     Display the home page with all categories and their subcategories.
     """
     context = {}
-    if request.session.get('is_authenticated'):
-        connection, cursor = get_db_connection()
-        if connection and cursor:
-            try:
+    connection, cursor = get_db_connection()
+    if connection and cursor:
+        try:
+            # Fetch categories and their subcategories
+            cursor.execute('''
+                SELECT kj.id, kj.namakategori, sj.id, sj.namasubkategori 
+                FROM KATEGORI_JASA kj 
+                LEFT JOIN SUBKATEGORI_JASA sj ON kj.id = sj.kategorijasaid
+                ORDER BY kj.namakategori, sj.namasubkategori
+            ''')
+            
+            # Organize the data into a nested structure
+            categories_dict = {}
+            for row in cursor.fetchall():
+                cat_id, cat_name, subcat_id, subcat_name = row
+                if cat_id not in categories_dict:
+                    categories_dict[cat_id] = {
+                        'id': cat_id,
+                        'nama_kategori': cat_name,
+                        'subcategories': []
+                    }
+                if subcat_id and subcat_name:  # Only add if subcategory exists
+                    categories_dict[cat_id]['subcategories'].append({
+                        'id': subcat_id,
+                        'nama_subkategori': subcat_name
+                    })
+            
+            context['categories'] = list(categories_dict.values())
+
+            if request.session.get('is_authenticated'):
                 user_id = request.session.get('user_id')
                 user_type = request.session.get('user_type')
                 additional_attributes = get_user_profile_data(user_id, user_type, cursor)
                 context['additional_attributes'] = additional_attributes
-            finally:
-                cursor.close()
-                connection.close()
+        finally:
+            cursor.close()
+            connection.close()
     return render(request, 'home.html', context)
 
 @transaction.atomic
