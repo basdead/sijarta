@@ -28,6 +28,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
+# Prevent Django from appending slashes to URLs
+APPEND_SLASH = False
 
 # Application definition
 
@@ -40,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'main',
     'profil',
+    'subkategori'
 ]
 
 MIDDLEWARE = [
