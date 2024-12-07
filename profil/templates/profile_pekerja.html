@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Edit Profile - Sijarta{% endblock %}
+{% block title %}{{ form.nama.value }} - Profil{% endblock %}
 {% block content %}
 {% include 'navbar.html' %}
 <div class="edit-profile-content">
@@ -109,7 +109,7 @@
                                        required>
                                     <option value="">Pilih Bank</option>
                                     {% for value, label in form.nama_bank.field.choices %}
-                                        {% if value != "" %}
+                                        {% if value != "" and label != "MyPay" %}
                                             <option value="{{ value }}">{{ label }}</option>
                                         {% endif %}
                                     {% endfor %}

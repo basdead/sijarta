@@ -1,0 +1,413 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}Pesanan Saya{% endblock %}
+{% block content %}
+{% include 'navbar.html' %}
+
+<div class="my-orders-content">
+    <div class="navigation">
+        <div class="navigation-buttons">
+            <button onclick="window.location.href='{% url 'main:show_home_page' %}'" class="navigation-button">
+                <div class="home horizontal-stack-info">
+                    <img src="https://www.svgrepo.com/show/500894/home.svg" alt="Home" style="width: 20px; height: 20px;">
+                    <span>Home</span>
+                </div>
+            </button>
+            <div class="path">
+                <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
+            </div>
+            <button class="navigation-button">
+                <div class="order horizontal-stack-info" style="color: #667a7b;">
+                    <img src="https://www.svgrepo.com/show/458003/order.svg" alt="Order" style="width: 20px; height: 20px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
+                    <span>Pesanan Saya</span>
+                </div>
+            </button>
+        </div>
+    </div>
+    <div class="my-orders-container">
+        <div class="my-orders-container-content">
+            <div class="my-orders-area">
+                <div class="filters">
+                    <div class="dropdown" style="width: 100%;">
+                        <select name="subcategory"
+                            id="subcategory-dropdown"
+                            class="dropdown-content horizontal-stack-info" 
+                            style="width: 100%; display: flex; justify-content: center; align-items: center; border-radius: 2rem; background-color: #cdddde; outline: none; box-shadow: none; appearance: none; padding: 0px 5px 0px 5px; background-image: url('https://www.svgrepo.com/show/522029/chevron-down.svg'); background-repeat: no-repeat; background-position: right 10px center; background-size: 20px;">
+                            <option value="">Subkategori</option>
+                            {% for category in categories %}
+                                <optgroup label="{{ category.nama_kategori }}">
+                                    {% for subcategory in category.subcategories %}
+                                        <option value="{{ subcategory.id }}">{{ subcategory.nama_subkategori }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="dropdown" style="width: 100%;">
+                        <select name="order-status"
+                            id="order-status-dropdown"
+                            class="dropdown-content horizontal-stack-info" 
+                            style="width: 100%; display: flex; justify-content: center; align-items: center; border-radius: 2rem; background-color: #cdddde; outline: none; box-shadow: none; appearance: none; padding: 0px 5px 0px 5px; background-image: url('https://www.svgrepo.com/show/522029/chevron-down.svg'); background-repeat: no-repeat; background-position: right 10px center; background-size: 20px;">
+                            <option value="">Status Pesanan</option>
+                            {% for status in order_statuses %}    
+                                <option value="{{ status.id }}">{{ status.status }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="the-search-bar" style="width: 100%;">
+                        <div class="search-content horizontal-stack-info">
+                            <img src="https://www.svgrepo.com/show/479638/search-2.svg" alt="Search" class="search-icon" style="width: 18px; height: 18px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
+                            <input type="text" id="search-input" placeholder="Cari" class="w-100 search-input" style="border: none; background: none; outline: none;">
+                        </div>
+                    </div>
+                </div>
+                <div class="orders-table">
+                    <div class="order-table-header">
+                        <div class="order-table-header-contents">
+                            <div class="header-cell"><strong class="order-header-labels">Subkategori Jasa</strong></div>
+                            <div class="header-cell"><strong class="order-header-labels">Sesi Layanan</strong></div>
+                            <div class="header-cell"><strong class="order-header-labels">Harga</strong></div>
+                            <div class="header-cell"><strong class="order-header-labels">Nama Pekerja</strong></div>
+                            <div class="header-cell"><strong class="order-header-labels">Status</strong></div>
+                            <div class="header-cell"><strong class="order-header-labels">Aksi</strong></div>
+                        </div>
+                    </div>
+                    <div class="order-table-content">
+                        {% if orders %}
+                        <div class="order-items">
+                            {% for order in orders %}
+                            <div class="order-item" onclick="" style="cursor: pointer;">
+                                <div class="order-details">
+                                    <div class="detail-cell">{{ order.subkategori_jasa.nama }}</div>
+                                    <div class="detail-cell">{{ order.sesi_layanan }}</div>
+                                    <div class="detail-cell">Rp {{ order.harga }}</div>
+                                    <div class="detail-cell">{{ order.pekerja.nama }}</div>
+                                    <div class="detail-cell">{{ order.status }}</div>
+                                    <div class="detail-cell button-row">
+                                        <button type="submit" class="table-button">Detail</button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="no-orders">
+                            Belum ada pesanan yang dibuat
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --placeholder-color: #6c757d;
+        --text-color: #323031;
+    }
+
+    body {
+        padding-top: 70px; /* Adjust this value based on the height of your navbar */
+    }
+
+    button {
+        outline: none;
+    }
+
+    .my-orders-content {
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .my-orders-container {
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #e9f0f1;
+        border-radius: 0.5rem;
+        width: 100%;  /* Added */
+    }
+
+    .navigation-buttons {
+        display: flex;
+        margin-bottom: 20px;
+    }
+
+    .navigation-button {
+        padding: 0.3rem 0.8rem;
+        border-radius: 2rem;
+        background-color: #e9f0f1;
+        width: fit-content;
+        display: flex;
+        flex-direction: row;
+        border: none;
+    }
+
+    .horizontal-stack-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .my-orders-container-content {
+        padding: 20px;
+        width: 100%;  /* Added */
+    }
+
+    .my-orders-area {
+        width: 100%;
+        padding: 30px;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .filters {
+        display: flex;
+        flex-direction: row;
+        gap: 1rem;
+        width: 100%;
+    }
+
+    .dropdown {
+        width: 100%;
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        display: flex;
+        flex-direction: row;
+        background-color: #cdddde;
+    }
+
+    .dropdown-content {
+        display: flex;
+        align-items: center;
+        position: relative;
+    }
+
+    select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background: none;
+        padding-right: 18px; /* Space for custom chevron */
+        border: none;
+    }
+
+    select:focus {
+        outline: none;
+        box-shadow: none;
+    }
+
+    .the-search-bar {
+        width: 100%;
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        display: flex;
+        flex-direction: row;
+        background-color: #e9f0f1;
+    }
+
+    .search-content {
+        display: flex;
+        align-items: center;
+    }
+
+    .search-content input {
+        font-family: inherit;
+        font-size: inherit;
+    }
+
+    .search-content input::placeholder {
+        color: var(--placeholder-color);
+    }
+
+    .orders-table {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .order-table-header {
+        padding: 10px 20px;
+        margin-bottom: 0;
+        background-color: #177E89;
+        color: white;
+        border-radius: 0.5rem 0.5rem 0 0;
+        font-size: 16px;
+        width: 100%;
+        transition: border-radius 0.3s ease;
+    }
+
+    .order-table-header-contents {
+        padding: 5px 25px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .header-cell {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .order-header-labels {
+        color: white;
+    }
+
+    .order-table-content {
+        padding: 20px;
+        margin-bottom: 0;
+        background-color: #cdddde;
+        border-radius: 0 0 0.5rem 0.5rem;
+        font-size: 16px;
+        width: 100%;
+        display: block;
+        transition: all 0.3s ease;
+    }
+
+    .order-items {
+        width: 100%;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .order-item {
+        padding: 15px;
+        transition: background-color 0.2s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .order-item:hover {
+        background-color: #e9ecef;
+        border-radius: 0.3rem;
+    }
+
+    .order-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        width: 100%;
+    }
+
+    .detail-cell {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .action-button {
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    .action-button:hover {
+        background-color: #45a049;
+    }
+
+    .no-orders {
+        width: 100%;
+        text-align: center;
+        padding: 20px;
+        color: #666;
+    }
+
+    .button-row {
+        display: flex;
+        justify-content: center;
+    }
+
+    .table-button {
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        background-color: #177E89;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 1.1rem;
+    }
+
+    .table-button:hover {
+        background-color: #084c61;
+    }
+</style>
+
+<script>
+    document.getElementById('subcategory-dropdown').addEventListener('change', function() {
+        const selectedSubcategory = this.value;
+        const rows = document.querySelectorAll('tbody tr');
+        
+        rows.forEach(row => {
+            const subcategoryCell = row.querySelector('td:nth-child(5)'); // Adjust index based on your table structure
+            if (!selectedSubcategory || subcategoryCell.textContent === selectedSubcategory) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    function viewOrderDetails(orderId) {
+        // TODO: Implement order details view
+        alert('View details for order #' + orderId);
+    }
+
+    // Search functionality
+    const searchInput = document.getElementById('search-input');
+    const searchIcon = document.querySelector('.search-icon');
+    
+    // Function to update search input and icon colors
+    function updateSearchColors() {
+        if (searchInput.value.length > 0) {
+            searchInput.style.color = 'var(--text-color)';
+            searchIcon.style.filter = 'invert(0)';
+        } else {
+            searchInput.style.color = 'var(--placeholder-color)';
+            searchIcon.style.filter = 'invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%)';
+        }
+    }
+
+    // Update colors when text is entered/deleted
+    searchInput.addEventListener('input', updateSearchColors);
+
+    function performSearch() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const orderRows = document.querySelectorAll('.order-row');
+        
+        orderRows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            if (text.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    // Search in real-time as user types
+    searchInput.addEventListener('input', performSearch);
+</script>
+{% endblock %}

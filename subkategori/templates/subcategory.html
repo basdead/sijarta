@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% load humanize %}
-{% block title %}{{ subcategory.nama_subkategori }} - Sijarta{% endblock %}
+{% block title %}{{ subcategory.nama_subkategori }}{% endblock %}
 {% block content %}
 {% include 'navbar.html' %}
 
@@ -141,12 +141,12 @@
                             {% endif %}
                             <div class="session-item">
                                 <div class="session-info">
-                                    <div class="session-number">Sesi {{ session.sesi }}</div>
+                                    <div class="session-number">{{ session.sesi }} Jam</div>
                                     <div class="session-price">Rp {{ session.harga }}</div>
                                 </div>
                                 {% if request.session.is_authenticated and request.session.user_type == 'pelanggan' %}
                                 <div class = "p_buttons">
-                                    <button class="order-session" onclick="{% if request.session.is_authenticated %}window.location.href='{% url 'pemesanan_jasa:order_form' subcategory.nama_subkategori|cut:' ' %}'{% else %}window.location.href='{% url 'main:login_user' %}'{% endif %}">Pesan Jasa</button>
+                                    <button class="order-session" onclick="{% if request.session.is_authenticated %}window.location.href='{% url 'pemesanan_jasa:order_form' subcategory.nama_subkategori|cut:' ' %}?sesi=' + encodeURIComponent(this.closest('.session-item').querySelector('.session-number').textContent.split(' ')[0]){% else %}window.location.href='{% url 'main:login_user' %}'{% endif %}">Pesan Jasa</button>
                                 </div>
                                 {% endif %}
                             </div>
@@ -504,5 +504,14 @@
         header.classList.toggle('collapsed');
         content.classList.toggle('hidden');
     }
+</script>
+<script>
+    document.querySelectorAll('.order-session').forEach(button => {
+        button.addEventListener('click', function() {
+            const sessionText = this.closest('.session-item').querySelector('.session-number').textContent;
+            const sessionNumber = sessionText.split(' ')[0];  
+            window.location.href = `/pemesanan-jasa/${subcategory.nama_subkategori|cut:' ' }?selected_session=${sessionNumber}`;
+        });
+    });
 </script>
 {% endblock %}

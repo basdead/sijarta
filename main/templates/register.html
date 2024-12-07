@@ -209,7 +209,7 @@
                                        required>
                                     <option value="">Pilih Bank</option>
                                     {% for value, label in form.nama_bank.field.choices %}
-                                        {% if value != "" %}
+                                        {% if value != "" and label != "MyPay" %}
                                             <option value="{{ value }}">{{ label }}</option>
                                         {% endif %}
                                     {% endfor %}

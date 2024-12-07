@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}Order Jasa {{ subcategory.nama_subkategori }} - Sijarta{% endblock %}
+{% load humanize %}
+{% block title %}Pesan Jasa {{ subcategory.nama_subkategori }}{% endblock %}
 {% block content %}
 {% include 'navbar.html' %}
 <div class="pemesanan-content">
@@ -56,7 +57,7 @@
             <button class="navigation-button">
                 <div class="order horizontal-stack-info" style="color: #667a7b;">
                     <img src="https://www.svgrepo.com/show/458003/order.svg" alt="Order" style="width: 20px; height: 20px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
-                    <span>Order Jasa</span>
+                    <span>Pesan Jasa</span>
                 </div>
             </button>
         </div>
@@ -78,21 +79,19 @@
                         </div>
 
                         <div class="form-group mb-3">
-                            <label>Tanggal Pekerjaan</label>
-                            <input type="date" name="tgl_pekerjaan" class="w-100" required min="{{ current_date }}">
-                        </div>
-
-                        <div class="form-group mb-3">
-                            <label>Waktu Pekerjaan</label>
-                            <input type="time" name="waktu_pekerjaan" class="w-100" required>
-                        </div>
-
-                        <div class="form-group mb-3">
-                            <label>Sesi</label>
-                            <select name="sesi" id="sesi" class="w-100" required>
+                            <label for="sesi">Sesi</label>
+                            <select name="sesi" 
+                                   id="sesi" 
+                                   class="w-100"
+                                   style="width: 100%; display: flex; justify-content: center; align-items: center; border-radius: 2rem; background-color: #e9f0f1; outline: none; box-shadow: none; appearance: none; padding: 0.6rem 1.2rem; background-image: url('https://www.svgrepo.com/show/522029/chevron-down.svg'); background-repeat: no-repeat; background-position: right 1.2rem center; background-size: 20px;"
+                                   required>
                                 <option value="">Pilih Sesi</option>
                                 {% for session in sessions %}
-                                    <option value="{{ session.sesi }}" data-price="{{ session.harga }}">{{ session.sesi }} Jam - Rp {{ session.harga|floatformat:0 }}</option>
+                                    <option value="{{ session.sesi }}" 
+                                            data-price="{{ session.harga }}" 
+                                            {% if selected_session and session.sesi == selected_session %}selected{% endif %}>
+                                        {{ session.sesi }} Jam - Rp {{ session.harga_display }}
+                                    </option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -109,8 +108,12 @@
                         </div>
 
                         <div class="form-group mb-3">
-                            <label>Metode Pembayaran</label>
-                            <select name="metode_bayar" class="w-100" required>
+                            <label for="metode_bayar">Metode Pembayaran</label>
+                            <select name="metode_bayar" 
+                                   id="metode_bayar" 
+                                   class="w-100"
+                                   style="width: 100%; display: flex; justify-content: center; align-items: center; border-radius: 2rem; background-color: #e9f0f1; outline: none; box-shadow: none; appearance: none; padding: 0.6rem 1.2rem; background-image: url('https://www.svgrepo.com/show/522029/chevron-down.svg'); background-repeat: no-repeat; background-position: right 1.2rem center; background-size: 20px;"
+                                   required>
                                 <option value="">Pilih Metode Pembayaran</option>
                                 {% for method in payment_methods %}
                                     <option value="{{ method.id }}">{{ method.nama }}</option>
@@ -291,24 +294,44 @@
 {% block script %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Send timezone information with every request
+    function addTimezoneHeader() {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', window.location.href);
+        xhr.setRequestHeader('Timezone', timezone);
+        xhr.send();
+    }
+    addTimezoneHeader();
+
     const sesiSelect = document.getElementById('sesi');
     const totalDisplay = document.getElementById('total_pembayaran');
     const totalHidden = document.getElementById('total_pembayaran_hidden');
     let currentPrice = 0;
 
+    function formatPrice(price) {
+        return new Intl.NumberFormat('id-ID').format(price);
+    }
+
     function updateTotal() {
-        totalDisplay.value = `Rp ${currentPrice.toLocaleString('id-ID')}`;
+        totalDisplay.value = `Rp ${formatPrice(currentPrice)}`;
         totalHidden.value = currentPrice;
     }
 
     sesiSelect.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
-        currentPrice = parseFloat(selectedOption.dataset.price || 0);
+        currentPrice = parseInt(selectedOption.dataset.price || 0);
         updateTotal();
     });
 
-    // Initialize total display
-    updateTotal();
+    // Initialize total display if there's a pre-selected option
+    const selectedOption = sesiSelect.options[sesiSelect.selectedIndex];
+    if (selectedOption && selectedOption.value) {
+        currentPrice = parseInt(selectedOption.dataset.price || 0);
+        updateTotal();
+    } else {
+        updateTotal();
+    }
 });
 </script>
 {% endblock script %}
