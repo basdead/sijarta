@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 # Home page view to display categories and subcategories
 def get_user_profile_data(user_id, user_type, cursor):
     """Helper function to get user profile data for navbar"""
-    profile_data = {}
+    navbar_data = {}
     if user_type == 'pekerja':
         cursor.execute(
             'SELECT linkfoto FROM PEKERJA WHERE id = %s',
@@ -23,8 +23,8 @@ def get_user_profile_data(user_id, user_type, cursor):
         )
         pekerja_data = cursor.fetchone()
         if pekerja_data:
-            profile_data['foto_url'] = pekerja_data[0]
-    return profile_data
+            navbar_data['foto_url'] = pekerja_data[0]
+    return navbar_data
 
 def show_home_page(request):
     """
@@ -63,8 +63,8 @@ def show_home_page(request):
             if request.session.get('is_authenticated'):
                 user_id = request.session.get('user_id')
                 user_type = request.session.get('user_type')
-                additional_attributes = get_user_profile_data(user_id, user_type, cursor)
-                context['additional_attributes'] = additional_attributes
+                navbar_attributes = get_user_profile_data(user_id, user_type, cursor)
+                context['navbar_attributes'] = navbar_attributes
         finally:
             cursor.close()
             connection.close()
