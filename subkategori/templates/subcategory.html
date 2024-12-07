@@ -16,21 +16,37 @@
             <div class="path">
                 <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
             </div>
-            <button onclick="window.location.href='/subcategory/' + encodeURIComponent('{{ subcategory.nama_subkategori }}'.replace(/ /g, '-'))" class="navigation-button" style="cursor: pointer;">
+            <button onclick="window.location.href='/subcategory/{{ subcategory.nama_subkategori|cut:" " }}'" class="navigation-button" style="cursor: pointer;">
                 <div class="subcateg horizontal-stack-info">
-                    <img src="https://www.svgrepo.com/show/495141/category-2.svg" alt="Subcategory" style="width: 15px; height: 15px;">
-                    <span>Subcategory</span>
+                    {% if category.nama_kategori == 'Deep Cleaning' %}
+                        <img src="https://www.svgrepo.com/show/490223/sofa.svg" alt="Deep Cleaning" style="margin-bottom: 2px; width: 15px; height: 15px;">
+                    {% elif category.nama_kategori == 'Hair Care' %}
+                        <img src="https://www.svgrepo.com/show/431704/hair.svg" alt="Hair Care" style="width: 20px; height: 20px;">
+                    {% elif category.nama_kategori == 'Home Cleaning' %}
+                        <img src="https://www.svgrepo.com/show/490589/broom-cleaning.svg" alt="Home Cleaning" style="width: 15px; height: 15px;">
+                    {% elif category.nama_kategori == 'Massage' %}
+                        <img src="https://www.svgrepo.com/show/220289/lotus-yoga.svg" alt="Massage" style="width: 15px; height: 15px;">
+                    {% elif category.nama_kategori == 'Service AC' %}
+                        <img src="https://www.svgrepo.com/show/503152/air-conditioner.svg" alt="Service AC" style="width: 20px; height: 20px;">
+                    {% endif %}
+                    <span>{{ category.nama_kategori }}</span>
                 </div>
             </button>
             <div class="path">
                 <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
             </div>
-            <button onclick="window.location.href='/subcategory/' + encodeURIComponent('{{ subcategory.nama_subkategori }}'.replace(/ /g, '-'))" class="navigation-button" style="cursor: pointer;">
+            <button onclick="window.location.href='/subcategory/{{ subcategory.nama_subkategori|cut:" " }}'" class="navigation-button" style="cursor: pointer;">
                 <div class="subcateg-name horizontal-stack-info" style="color: #667a7b;">
                     {% if category.nama_kategori == 'Deep Cleaning' %}
                         <img src="https://www.svgrepo.com/show/490223/sofa.svg" alt="Deep Cleaning" style="margin-bottom: 2px; width: 15px; height: 15px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
                     {% elif category.nama_kategori == 'Hair Care' %}
-                        <img src="https://www.svgrepo.com/show/431704/hair.svg" alt="Hair Care" style="width: 15px; height: 15px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
+                        <img src="https://www.svgrepo.com/show/431704/hair.svg" alt="Hair Care" style="width: 20px; height: 20px; filter: invert(48%) sepia(9%) saturate(754%) hue-rotate(152deg) brightness(92%) contrast(87%);">
+                    {% elif category.nama_kategori == 'Home Cleaning' %}
+                        <img src="https://www.svgrepo.com/show/490589/broom-cleaning.svg" alt="Home Cleaning" style="width: 15px; height: 15px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
+                    {% elif category.nama_kategori == 'Massage' %}
+                        <img src="https://www.svgrepo.com/show/220289/lotus-yoga.svg" alt="Massage" style="width: 15px; height: 15px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
+                    {% elif category.nama_kategori == 'Service AC' %}
+                        <img src="https://www.svgrepo.com/show/503152/air-conditioner.svg" alt="Service AC" style="width: 20px; height: 20px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
                     {% endif %}
                     <span>{{ subcategory.nama_subkategori }}</span>
                 </div>
@@ -43,6 +59,24 @@
                 <div class="subcategory-picture">
                     {% if subcategory.nama_subkategori == 'Cuci Kasur' %}
                         <img src="https://blog.kliknclean.com/wp-content/uploads/cuci-kasur-1.jpg" alt="Cuci Kasur">
+                    {% elif subcategory.nama_subkategori == 'Cuci Sofa' %}
+                        <img src="https://blog.kliknclean.com/wp-content/uploads/WhatsApp-Image-2022-12-05-at-10.49.59.jpeg" alt="Cuci Sofa">
+                    {% elif subcategory.nama_subkategori == 'Hair Coloring' %}
+                        <img src="https://media.allure.com/photos/61bc9e2161450b343d3a87ac/master/pass/hair-dye-red-hair-treatment.jpg" alt="Hair Coloring">
+                    {% elif subcategory.nama_subkategori == 'Hair Cut' %}
+                        <img src="https://shelleyshairandspa.com/wp-content/uploads/2020/09/haircut.jpeg" alt="Hair Cut">
+                    {% elif subcategory.nama_subkategori == 'Daily Cleaning' %}
+                        <img src="https://cdn.prod.website-files.com/640051ce8a159067e1042e74/65d5b19950d874f282b5c35f_woman-with-gloves-cleaning-floor_23-2148520978.jpg" alt="Daily Cleaning">
+                    {% elif subcategory.nama_subkategori == 'Setrika' %}
+                        <img src="https://www.bredonhillcleaningservices.co.uk/wp-content/uploads/2020/07/shutterstock-238643320-cropped-1521537943-scaled.jpg" alt="Setrika">
+                    {% elif subcategory.nama_subkategori == 'Balinese Massage' %}
+                        <img src="https://finnsbeachclub.com/wp-content/uploads/2023/12/0512-0750_baligreenspa_indonesia_pelago14.jpg" alt="Balinese Massage">
+                    {% elif subcategory.nama_subkategori == 'Swedish Massage' %}
+                        <img src="https://palaisfrance.com/wp-content/uploads/2023/12/image-1.png" alt="Swedish Massage">
+                    {% elif subcategory.nama_subkategori == 'Cuci AC' %}
+                        <img src="https://img.choice.com.au/-/media/f12ceb8d12254788b1dff8a5f7377f80.ashx" alt="Cuci AC">
+                    {% elif subcategory.nama_subkategori == 'Refill Freon' %}
+                        <img src="https://www.checkatrade.com/blog/wp-content/uploads/2021/08/Feature-Freon-refill-cost.jpg" alt="Refill Freon">
                     {% endif %}
                 </div>
                 <div class="subcategory-main-info">
@@ -57,7 +91,19 @@
                                 </div>
                             {% elif category.nama_kategori == 'Hair Care' %}
                                 <div class="category-info horizontal-stack-info">
-                                    <img src="https://www.svgrepo.com/show/431704/hair.svg" alt="Hair Care" style="width: 15px; height: 15px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
+                                    <img src="https://www.svgrepo.com/show/431704/hair.svg" alt="Hair Care" style="width: 20px; height: 20px; filter: brightness(0);">
+                                </div>
+                            {% elif category.nama_kategori == 'Home Cleaning' %}
+                                <div class="category-info horizontal-stack-info">
+                                    <img src="https://www.svgrepo.com/show/490589/broom-cleaning.svg" alt="Home Cleaning" style="width: 15px; height: 15px; filter: brightness(0);">
+                                </div>
+                            {% elif category.nama_kategori == 'Massage' %}
+                                <div class="category-info horizontal-stack-info">
+                                    <img src="https://www.svgrepo.com/show/220289/lotus-yoga.svg" alt="Massage" style="width: 15px; height: 15px; filter: brightness(0);">
+                                </div>
+                            {% elif category.nama_kategori == 'Service AC' %}
+                                <div class="category-info horizontal-stack-info">
+                                    <img src="https://www.svgrepo.com/show/503152/air-conditioner.svg" alt="Service AC" style="width: 20px; height: 20px; filter: brightness(0);">
                                 </div>
                             {% endif %}
                             <span>{{ category.nama_kategori }}</span>
@@ -95,8 +141,13 @@
                             <div class="session-item">
                                 <div class="session-info">
                                     <div class="session-number">Sesi {{ session.sesi }}</div>
-                                    <div class="session-price">Rp {{ session.harga|intcomma }}</div>
+                                    <div class="session-price">Rp {{ session.harga }}</div>
                                 </div>
+                                {% if request.session.is_authenticated and request.session.user_type == 'pelanggan' %}
+                                <div class = "p_buttons">
+                                    <button class="order-session" onclick="window.location.href=''">Pesan Jasa</button>
+                                </div>
+                                {% endif %}
                             </div>
                             {% if forloop.counter|divisibleby:4 or forloop.last %}
                                 </div>
@@ -264,7 +315,7 @@
         gap: 1rem;
     }
 
-    .join-sub {
+    .join-sub, .order-session {
         padding: 0.5rem 1rem;
         border-radius: 2rem;
         background-color: #177E89;
@@ -273,7 +324,7 @@
         border: none;
     }
 
-    .join-sub:hover {
+    .join-sub:hover, .order-session:hover {
         background-color: #084c61;
     }
 
@@ -344,21 +395,19 @@
     }
 
     .session-item {
-        flex: 0 0 calc(25% - 15px);
-        background: white;
-        border-radius: 8px;
-        padding: 12px;
-        transition: background-color 0.2s ease;
-    }
-
-    .session-item:hover {
-        background-color: #f8f9fa;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        background-color: #F5F5F5;
+        border-radius: 0.5rem;
+        width: 100%;
     }
 
     .session-info {
         display: flex;
         flex-direction: column;
-        gap: 5px;
+        gap: 0.25rem;
     }
 
     .session-number {
@@ -367,8 +416,22 @@
     }
 
     .session-price {
-        color: #084c61;
         font-weight: bold;
+    }
+
+    .p_buttons {
+        margin-left: auto;
+    }
+
+    .join-sub, .order-session {
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        background-color: #177E89;
+        color: white;
+        width: fit-content;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
     }
 
     .no-sessions {

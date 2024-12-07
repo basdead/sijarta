@@ -45,7 +45,7 @@
                             {% if category.subcategories %}
                             <div class="subcategories">
                                 {% for subcategory in category.subcategories %}
-                                <div class="subcategory" onclick="window.location.href='/subcategory/' + encodeURIComponent('{{ subcategory.nama_subkategori }}'.replace(/ /g, '-'))" style="cursor: pointer;">
+                                <div class="subcategory" onclick="window.location.href='/subcategory/{{ subcategory.nama_subkategori|cut:' ' }}'" style="cursor: pointer;">
                                     <div class="subcategory-name">{{ subcategory.nama_subkategori }}</div>
                                 </div>
                                 {% endfor %}
@@ -272,11 +272,10 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        gap: 1rem;
+        gap: 1.5rem;
     }
 
     .category-card {
-        padding: 10px;
         width: 100%;
         display: flex;
         flex-direction: column;
