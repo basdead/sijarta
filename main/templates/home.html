@@ -39,11 +39,19 @@
                             <strong>{{ category.nama_kategori }}</strong>
                         </div>
                         <div class="category-card-content">
-                            {% for subcategory in category.subcategories %}
-                            <div class="subcategory" onclick="window.location.href='/subcategory/' + encodeURIComponent('{{ subcategory.nama_subkategori }}'.replace(/ /g, '-'))" style="cursor: pointer;">
-                                <span>{{ subcategory.nama_subkategori }}</span>
+                            {% if category.subcategories %}
+                            <div class="subcategories">
+                                {% for subcategory in category.subcategories %}
+                                <div class="subcategory" onclick="window.location.href='/subcategory/' + encodeURIComponent('{{ subcategory.nama_subkategori }}'.replace(/ /g, '-'))" style="cursor: pointer;">
+                                    <div class="subcategory-name">{{ subcategory.nama_subkategori }}</div>
+                                </div>
+                                {% endfor %}
                             </div>
-                            {% endfor %}
+                            {% else %}
+                            <div class="no-subcategories">
+                                Tidak ada subkategori
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                     {% endfor %}
@@ -268,42 +276,62 @@
         width: 100%;
         display: flex;
         flex-direction: column;
+        margin-bottom: 0.rem;
     }
 
     .category-card-header {
         padding: 10px 20px;
         margin-bottom: 0;
-        background-color:#177E89;
+        background-color: #177E89;
         color: white;
-        border-radius: 0.5rem 0.5rem 0rem 0rem;
+        border-radius: 0.5rem 0.5rem 0 0;
         font-size: 16px;
     }
 
     .category-card-content {
         padding: 20px;
         margin-bottom: 0;
-        background-color:#cdddde;
-        border-radius: 0rem 0rem 0.5rem 0.5rem;
+        background-color: #cdddde;
+        border-radius: 0 0 0.5rem 0.5rem;
         font-size: 16px;
     }
 
-    .subcategory {
+    .subcategories {
         width: 100%;
         padding: 10px;
         background-color: #f8f9fa;
         border-radius: 0.5rem;
         display: flex;
         flex-direction: column;
-        margin-bottom: 1rem;
-        transition: background-color 0.3s ease;
+    }
+
+    .subcategory {
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
+        transition: background-color 0.2s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .subcategory:hover {
         background-color: #e9ecef;
+        border-radius: 0.3rem;
     }
 
     .subcategory:last-child {
-        margin-bottom: 0;
+        border-bottom: none;
+    }
+
+    .subcategory-name {
+        font-weight: bold;
+        color: #177E89;
+    }
+
+    .no-subcategories {
+        text-align: center;
+        color: #6c757d;
+        padding: 20px;
     }
 </style>
 
