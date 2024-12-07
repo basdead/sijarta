@@ -82,18 +82,27 @@ def show_subcategory(request, subcategory_name):
         cur.close()
         conn.close()
         
-        context = {
-            'subcategory': subcategory,
-            'category': category,
-            'sessions': sessions,
-            'enrolled_workers': enrolled_workers
-        }
-        
-        # Add profile photo URL and enrollment status for workers
-        if request.session.get('user_type') == 'pekerja':
-            user_id = request.session.get('user_id')
-            conn, cur = get_db_connection()
-            if conn and cur:
+        # Get logged-in user's data for navbar
+        conn, cur = get_db_connection()
+        if conn and cur:
+            cur.execute('SELECT linkfoto FROM PEKERJA WHERE id = %s', (request.session.get('user_id'),))
+            navbar_data = cur.fetchone()
+            navbar_attributes = {}
+            if request.session.get('user_type') == 'pekerja' and navbar_data:
+                navbar_attributes['foto_url'] = navbar_data[0]
+
+            context = {
+                'subcategory': subcategory,
+                'category': category,
+                'sessions': sessions,
+                'enrolled_workers': enrolled_workers,
+                'navbar_attributes': navbar_attributes  # Add navbar data to context
+            }
+            
+            # Add profile photo URL and enrollment status for workers
+            if request.session.get('user_type') == 'pekerja':
+                user_id = request.session.get('user_id')
+                
                 # Get pekerja photo
                 cur.execute('SELECT linkfoto FROM PEKERJA WHERE id = %s', (user_id,))
                 pekerja_data = cur.fetchone()
