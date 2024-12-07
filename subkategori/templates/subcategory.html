@@ -80,18 +80,27 @@
         </div>
         <div class="addts">
             <div class="session-container">
-                <div class="session-card-header">
-                    <strong>Pilihan Sesi Layanan</strong>
+                <div class="session-card-header" onclick="toggleSessions(this)" style="cursor: pointer;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong>Pilihan Sesi Layanan</strong>
+                        <img src="https://www.svgrepo.com/show/522029/chevron-down.svg" alt="Toggle" class="toggle-icon" style="width: 20px; height: 20px; filter: invert(100%);">
+                    </div>
                 </div>
                 <div class="session-card-content">
-                    <div class="sessions">
+                    <div class="sessions-grid">
                         {% for session in sessions %}
+                            {% if forloop.counter0|divisibleby:4 %}
+                                <div class="sessions-row">
+                            {% endif %}
                             <div class="session-item">
                                 <div class="session-info">
                                     <div class="session-number">Sesi {{ session.sesi }}</div>
                                     <div class="session-price">Rp {{ session.harga|intcomma }}</div>
                                 </div>
                             </div>
+                            {% if forloop.counter|divisibleby:4 or forloop.last %}
+                                </div>
+                            {% endif %}
                         {% empty %}
                             <div class="no-sessions">
                                 Belum ada sesi layanan tersedia.
@@ -101,27 +110,34 @@
                 </div>
             </div>
             <div class="workers-container">
-                <div class="workers-card-header">
-                    <strong>Pekerja</strong>
+                <div class="workers-card-header" onclick="toggleWorkers(this)" style="cursor: pointer;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong>Pekerja</strong>
+                        <img src="https://www.svgrepo.com/show/522029/chevron-down.svg" alt="Toggle" class="toggle-icon" style="width: 20px; height: 20px; filter: invert(100%);">
+                    </div>
                 </div>
                 <div class="workers-card-content">
-                    <div class="workers">
+                    <div class="workers-grid">
                         {% for worker in enrolled_workers %}
-                            <div class="session-item">
-                                <div class="session-info">
-                                    <div class="worker-info">
-                                        {% if worker.foto_url %}
-                                            <img src="{{ worker.foto_url }}" alt="{{ worker.nama }}" class="worker-photo">
-                                        {% else %}
-                                            <img src="https://www.svgrepo.com/show/384674/account-avatar-profile-user-11.svg" alt="Default Profile" class="worker-photo">
-                                        {% endif %}
-                                        <div class="workers-name">{{ worker.nama }}</div>
-                                    </div>
+                            {% if forloop.counter0|divisibleby:4 %}
+                                <div class="workers-row">
+                            {% endif %}
+                            <div class="worker-item">
+                                <div class="worker-info">
+                                    {% if worker.foto_url %}
+                                        <img src="{{ worker.foto_url }}" alt="{{ worker.nama }}" class="worker-photo">
+                                    {% else %}
+                                        <img src="https://www.svgrepo.com/show/384674/account-avatar-profile-user-11.svg" alt="Default Profile" class="worker-photo">
+                                    {% endif %}
+                                    <div class="workers-name">{{ worker.nama }}</div>
                                 </div>
                             </div>
+                            {% if forloop.counter|divisibleby:4 or forloop.last %}
+                                </div>
+                            {% endif %}
                         {% empty %}
                             <div class="no-workers">
-                                Belum ada pekerja yang terdaftar di subkategori ini.
+                                Belum ada pekerja yang terdaftar.
                             </div>
                         {% endfor %}
                     </div>
@@ -277,48 +293,72 @@
         margin-bottom: 0;
         background-color:#177E89;
         color: white;
-        border-radius: 0.5rem 0.5rem 0rem 0rem;
+        border-radius: 0.5rem;
         font-size: 16px;
         width: 100%;
+        transition: border-radius 0.3s ease;
+    }
+
+    .session-card-header.collapsed, .workers-card-header.collapsed {
+        border-radius: 0.5rem;
+    }
+
+    .session-card-header:not(.collapsed), .workers-card-header:not(.collapsed) {
+        border-radius: 0.5rem 0.5rem 0 0;
     }
 
     .session-card-content, .workers-card-content {
         padding: 20px;
         margin-bottom: 0;
         background-color:#cdddde;
-        border-radius: 0rem 0rem 0.5rem 0.5rem;
+        border-radius: 0 0 0.5rem 0.5rem;
         font-size: 16px;
         width: 100%;
+        display: block;
+        transition: all 0.3s ease;
     }
 
-    .sessions {
+    .session-card-content.hidden, .workers-card-content.hidden {
+        display: none;
+    }
+
+    .toggle-icon {
+        transition: transform 0.3s ease;
+    }
+
+    .collapsed .toggle-icon {
+        transform: rotate(-180deg);
+    }
+
+    .sessions-grid {
         width: 100%;
-        padding: 10px;
-        background-color: #f8f9fa;
-        border-radius: 0.5rem;
+        gap: 0.5rem;
         display: flex;
         flex-direction: column;
     }
 
+    .sessions-row {
+        display: flex;
+        justify-content: flex-start;
+        gap: 20px;
+    }
+
     .session-item {
-        padding: 15px;
-        border-bottom: 1px solid #e9ecef;
+        flex: 0 0 calc(25% - 15px);
+        background: white;
+        border-radius: 8px;
+        padding: 12px;
         transition: background-color 0.2s ease;
     }
 
     .session-item:hover {
-        background-color: #e9ecef;
-        border-radius: 0.3rem;
-    }
-
-    .session-item:last-child {
-        border-bottom: none;
+        background-color: #f8f9fa;
     }
 
     .session-info {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
+        flex-direction: column;
+        gap: 5px;
     }
 
     .session-number {
@@ -332,24 +372,38 @@
     }
 
     .no-sessions {
+        width: 100%;
         text-align: center;
-        color: #6c757d;
         padding: 20px;
+        color: #666;
     }
 
-    .workers {
+    .workers-grid {
         width: 100%;
-        padding: 10px;
-        background-color: #f8f9fa;
-        border-radius: 0.5rem;
+        gap: 0.5rem;
         display: flex;
         flex-direction: column;
     }
 
+    .workers-row {
+        display: flex;
+        justify-content: flex-start;
+        gap: 20px;
+    }
+
+    .worker-item {
+        flex: 0 0 calc(25% - 15px);
+        background: white;
+        border-radius: 8px;
+        padding: 8px;
+    }
+
     .worker-info {
         display: flex;
+        flex-direction: row;
         align-items: center;
-        gap: 1rem;
+        gap: 10px;
+        padding: 8px;
     }
 
     .worker-photo {
@@ -357,17 +411,33 @@
         height: 40px;
         border-radius: 50%;
         object-fit: cover;
+        margin: 0;
     }
 
     .workers-name {
         font-weight: bold;
         color: #177E89;
+        margin: 0;
     }
 
     .no-workers {
+        width: 100%;
         text-align: center;
-        color: #6c757d;
         padding: 20px;
+        color: #666;
     }
 </style>
+<script>
+    function toggleSessions(header) {
+        const content = header.nextElementSibling;
+        header.classList.toggle('collapsed');
+        content.classList.toggle('hidden');
+    }
+
+    function toggleWorkers(header) {
+        const content = header.nextElementSibling;
+        header.classList.toggle('collapsed');
+        content.classList.toggle('hidden');
+    }
+</script>
 {% endblock %}
