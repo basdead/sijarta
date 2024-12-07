@@ -35,8 +35,11 @@
                 <div class="category-cards">
                     {% for category in categories %}
                     <div class="category-card" data-category-id="{{ category.id }}">
-                        <div class="category-card-header">
-                            <strong>{{ category.nama_kategori }}</strong>
+                        <div class="category-card-header" onclick="toggleCategory(this)" style="cursor: pointer;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong>{{ category.nama_kategori }}</strong>
+                                <img src="https://www.svgrepo.com/show/522029/chevron-down.svg" alt="Toggle" class="toggle-icon" style="width: 20px; height: 20px; filter: invert(100%);">
+                            </div>
                         </div>
                         <div class="category-card-content">
                             {% if category.subcategories %}
@@ -273,10 +276,10 @@
     }
 
     .category-card {
+        padding: 10px;
         width: 100%;
         display: flex;
         flex-direction: column;
-        margin-bottom: 0.rem;
     }
 
     .category-card-header {
@@ -284,8 +287,18 @@
         margin-bottom: 0;
         background-color: #177E89;
         color: white;
-        border-radius: 0.5rem 0.5rem 0 0;
+        border-radius: 0.5rem;
         font-size: 16px;
+        width: 100%;
+        transition: border-radius 0.3s ease;
+    }
+
+    .category-card-header.collapsed {
+        border-radius: 0.5rem;
+    }
+
+    .category-card-header:not(.collapsed) {
+        border-radius: 0.5rem 0.5rem 0 0;
     }
 
     .category-card-content {
@@ -294,6 +307,21 @@
         background-color: #cdddde;
         border-radius: 0 0 0.5rem 0.5rem;
         font-size: 16px;
+        width: 100%;
+        display: block;
+        transition: all 0.3s ease;
+    }
+
+    .category-card-content.hidden {
+        display: none;
+    }
+
+    .toggle-icon {
+        transition: transform 0.3s ease;
+    }
+
+    .collapsed .toggle-icon {
+        transform: rotate(-180deg);
     }
 
     .subcategories {
@@ -447,6 +475,12 @@
 
         document.body.appendChild(form);
         form.submit();
+    }
+
+    function toggleCategory(header) {
+        const content = header.nextElementSibling;
+        header.classList.toggle('collapsed');
+        content.classList.toggle('hidden');
     }
 </script>
 {% endblock %}
