@@ -1,22 +1,373 @@
-{% extends 'base.html' %}
-
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-md-8 offset-md-2">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h2 class="mb-0">{{ subcategory.nama_subkategori }}</h2>
+{% include 'navbar.html' %}
+
+<div class="subcategory-content">
+    <div class="navigation">
+        <div class="navigation-buttons">
+            <button onclick="window.location.href='{% url 'main:show_home_page' %}'" class="navigation-button">
+                <div class="home horizontal-stack-info">
+                    <img src="https://www.svgrepo.com/show/500894/home.svg" alt="Home" style="width: 20px; height: 20px;">
+                    <span>Home</span>
                 </div>
-                <div class="card-body">
-                    <h5 class="card-title text-muted mb-3">Category: {{ category.nama_kategori }}</h5>
-                    <p class="card-text">{{ subcategory.deskripsi }}</p>
+            </button>
+            <div class="path">
+                <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
+            </div>
+            <button onclick="window.location.href='/subcategory/' + encodeURIComponent('{{ subcategory.nama_subkategori }}'.replace(/ /g, '-'))" class="navigation-button" style="cursor: pointer;">
+                <div class="subcateg horizontal-stack-info">
+                    <img src="https://www.svgrepo.com/show/495141/category-2.svg" alt="Subcategory" style="width: 15px; height: 15px;">
+                    <span>Subcategory</span>
                 </div>
-                <div class="card-footer">
-                    <a href="{% url 'main:home' %}" class="btn btn-secondary">Back to Home</a>
+            </button>
+            <div class="path">
+                <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
+            </div>
+            <button onclick="window.location.href='/subcategory/' + encodeURIComponent('{{ subcategory.nama_subkategori }}'.replace(/ /g, '-'))" class="navigation-button" style="cursor: pointer;">
+                <div class="subcateg-name horizontal-stack-info" style="color: #667a7b;">
+                    {% if category.nama_kategori == 'Deep Cleaning' %}
+                        <img src="https://www.svgrepo.com/show/490223/sofa.svg" alt="Deep Cleaning" style="margin-bottom: 2px; width: 15px; height: 15px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
+                    {% elif category.nama_kategori == 'Hair Care' %}
+                        <img src="https://www.svgrepo.com/show/431704/hair.svg" alt="Hair Care" style="width: 15px; height: 15px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
+                    {% endif %}
+                    <span>{{ subcategory.nama_subkategori }}</span>
+                </div>
+            </button>
+        </div>
+    </div>
+    <div class="subcategory-container">
+        <div class="subcategory-container-content">
+            <div class="sub-info horizontal-stack-subcategory">
+                <div class="subcategory-picture">
+                    {% if subcategory.nama_subkategori == 'Cuci Kasur' %}
+                        <img src="https://blog.kliknclean.com/wp-content/uploads/cuci-kasur-1.jpg" alt="Cuci Kasur">
+                    {% endif %}
+                </div>
+                <div class="subcategory-main-info">
+                    <div class="subcategory-name">
+                        <h1>{{ subcategory.nama_subkategori }}</h1>
+                    </div>
+                    <div class="mini-infos">
+                        <div class="mini-info">
+                            {% if category.nama_kategori == 'Deep Cleaning' %}
+                                <div class="category-info horizontal-stack-info">
+                                    <img src="https://www.svgrepo.com/show/490223/sofa.svg" alt="Deep Cleaning" style="margin-bottom: 2px; width: 15px; height: 15px;">
+                                </div>
+                            {% elif category.nama_kategori == 'Hair Care' %}
+                                <div class="category-info horizontal-stack-info">
+                                    <img src="https://www.svgrepo.com/show/431704/hair.svg" alt="Hair Care" style="width: 15px; height: 15px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
+                                </div>
+                            {% endif %}
+                            <span>{{ category.nama_kategori }}</span>
+                        </div>
+                    </div>
+                    <div class="subcategory-description">
+                        <span>Deskripsi: {{ subcategory.deskripsi }}</span>
+                    </div>
+                    {% if request.session.user_type == 'pekerja' %}
+                    <div class = "p_buttons">
+                        {% if not additional_attributes.is_enrolled %}
+                            <button class="join-sub" onclick="window.location.href='{% url 'subkategori:enroll_subcategory' subcategory.nama_subkategori %}'">Gabung ke Subkategori</button>
+                        {% else %}
+                            <div class="enrolled-status">Sudah terdaftar di subkategori ini</div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="addts">
+            <div class="session-container">
+                <div class="session-card-header">
+                    <strong>Pilihan Sesi Layanan</strong>
+                </div>
+                <div class="session-card-content">
+                    <div class="sessions">
+                        {% for session in sessions %}
+                            <div class="session-item">
+                                <div class="session-info">
+                                    <div class="session-number">Sesi {{ session.sesi }}</div>
+                                    <div class="session-price">Rp {{ session.harga|intcomma }}</div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="no-sessions">
+                                Belum ada sesi layanan tersedia.
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="workers-container">
+                <div class="workers-card-header">
+                    <strong>Pekerja</strong>
+                </div>
+                <div class="workers-card-content">
+                    <div class="workers">
+                        {% for worker in enrolled_workers %}
+                            <div class="session-item">
+                                <div class="session-info">
+                                    <div class="worker-info">
+                                        {% if worker.foto_url %}
+                                            <img src="{{ worker.foto_url }}" alt="{{ worker.nama }}" class="worker-photo">
+                                        {% else %}
+                                            <img src="https://www.svgrepo.com/show/384674/account-avatar-profile-user-11.svg" alt="Default Profile" class="worker-photo">
+                                        {% endif %}
+                                        <div class="workers-name">{{ worker.nama }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="no-workers">
+                                Belum ada pekerja yang terdaftar di subkategori ini.
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+<style>
+    body {
+        padding-top: 70px; /* Adjust this value based on the height of your navbar */
+    }
+
+    button {
+        outline: none;
+    }
+
+    .subcategory-content {
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .navigation-buttons {
+        display: flex;
+        margin-bottom: 20px;
+    }
+
+    .navigation-button {
+        padding: 0.3rem 0.8rem;
+        border-radius: 2rem;
+        background-color: #e9f0f1;
+        width: fit-content;
+        display: flex;
+        flex-direction: row;
+        border: none;
+    }
+
+    .subcategory-container {
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: stretch;
+        background-color: #e9f0f1;
+        border-radius: 0.5rem;
+        min-height: 60vh;
+        gap: 2rem;
+        width: 100%;
+    }
+
+    .subcategory-container-content {
+        width: 100%;
+        display: flex;
+        justify-content: stretch;
+    }
+
+    .sub-info {
+        padding: 10px;
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 4rem;
+        width: 100%;
+    }
+
+    .subcategory-picture {
+        border-radius: 0.5rem;
+        overflow: hidden;
+        flex: 0 0 45%;
+        aspect-ratio: 16/9;
+    }
+
+    .subcategory-picture img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .subcategory-name h1 {
+        font-size: 75px;
+        font-weight: bold;
+    }
+
+    .mini-infos {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .mini-info {
+        padding: 0.3rem 0.8rem;
+        border-radius: 2rem;
+        background-color: #f8f9fa;
+        width: fit-content;
+        display: flex;
+        flex-direction: row;
+        gap: 0.5rem;
+    }
+
+    .horizontal-stack-info {
+        gap: 0.5rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .category-info, .home {
+        display: flex;
+        align-items: center;
+    }
+
+    .subcategory-description {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        background-color: #cdddde;
+        border-radius: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .subcategory-main-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .join-sub {
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        background-color: #177E89;
+        color: white;
+        width: fit-content;
+        border: none;
+    }
+
+    .join-sub:hover {
+        background-color: #084c61;
+    }
+
+    .addts {
+        gap: 0.75rem;
+    }
+
+    .session-container, .workers-container {
+        padding: 10px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .session-card-header, .workers-card-header {
+        padding: 10px 20px;
+        margin-bottom: 0;
+        background-color:#177E89;
+        color: white;
+        border-radius: 0.5rem 0.5rem 0rem 0rem;
+        font-size: 16px;
+        width: 100%;
+    }
+
+    .session-card-content, .workers-card-content {
+        padding: 20px;
+        margin-bottom: 0;
+        background-color:#cdddde;
+        border-radius: 0rem 0rem 0.5rem 0.5rem;
+        font-size: 16px;
+        width: 100%;
+    }
+
+    .sessions {
+        width: 100%;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .session-item {
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
+        transition: background-color 0.2s ease;
+    }
+
+    .session-item:hover {
+        background-color: #e9ecef;
+        border-radius: 0.3rem;
+    }
+
+    .session-item:last-child {
+        border-bottom: none;
+    }
+
+    .session-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .session-number {
+        font-weight: bold;
+        color: #177E89;
+    }
+
+    .session-price {
+        color: #084c61;
+        font-weight: bold;
+    }
+
+    .no-sessions {
+        text-align: center;
+        color: #6c757d;
+        padding: 20px;
+    }
+
+    .workers {
+        width: 100%;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .worker-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .worker-photo {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .workers-name {
+        font-weight: bold;
+        color: #177E89;
+    }
+
+    .no-workers {
+        text-align: center;
+        color: #6c757d;
+        padding: 20px;
+    }
+</style>
 {% endblock %}

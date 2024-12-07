@@ -13,12 +13,10 @@
         <div class="navbar-nav">
             {% if request.session.is_authenticated %}
                 {% if request.session.user_type == 'pelanggan' %}
-                    <a href="{% url 'main:show_home_page' %}" class="nav-item nav-link active">Homepage</a>
                     <a href="" class="nav-item nav-link">MyPay</a>
                     <a href="" class="nav-item nav-link">Kelola Pesanan Saya</a>
                     <a href="" class="nav-item nav-link">Diskon</a>
                 {% elif request.session.user_type == 'pekerja' %}
-                    <a href="{% url 'main:show_home_page' %}" class="nav-item nav-link active">Homepage</a>
                     <a href="" class="nav-item nav-link">Kelola Pekerjaan Saya</a>
                     <a href="" class="nav-item nav-link">Kelola Status Pekerjaan</a>
                     <a href="" class="nav-item nav-link">MyPay</a>

@@ -6,4 +6,5 @@ app_name = 'subkategori'
 urlpatterns = [
     # Subcategory and Service Sessions
     re_path(r'^(?P<subcategory_name>[^/]+)/?$', views.show_subcategory, name='show_subcategory'),
+    re_path(r'^(?P<subcategory_name>[^/]+)/enroll/?$', views.enroll_subcategory, name='enroll_subcategory'),
 ]

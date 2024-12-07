@@ -52,17 +52,123 @@ def show_subcategory(request, subcategory_name):
             'id_kategori': result[3]
         }
         
+        # Fetch sesi_layanan for this subcategory
+        cur.execute("""
+            SELECT sesi, harga 
+            FROM SESI_LAYANAN sl
+            JOIN SUBKATEGORI_JASA sj ON sl.subkategoriid = sj.id
+            WHERE sj.namasubkategori = %s
+            ORDER BY sesi
+        """, [subcategory_name])
+        sessions = [{'sesi': row[0], 'harga': row[1]} for row in cur.fetchall()]
+        
+        # Fetch enrolled pekerja for this subcategory
+        cur.execute("""
+            SELECT DISTINCT u.nama, p.linkfoto
+            FROM PEKERJA p
+            JOIN "USER" u ON p.id = u.id
+            JOIN PEKERJA_KATEGORI_JASA pk ON p.id = pk.pekerjaid
+            JOIN KATEGORI_JASA k ON pk.kategorijasaid = k.id
+            JOIN SUBKATEGORI_JASA s ON s.kategorijasaid = k.id
+            WHERE s.namasubkategori = %s
+            ORDER BY u.nama
+        """, [subcategory_name])
+        
+        enrolled_workers = [
+            {'nama': row[0], 'foto_url': row[1]} 
+            for row in cur.fetchall()
+        ]
+        
         cur.close()
         conn.close()
         
         context = {
             'subcategory': subcategory,
-            'category': category
+            'category': category,
+            'sessions': sessions,
+            'enrolled_workers': enrolled_workers
         }
+        
+        # Add profile photo URL and enrollment status for workers
+        if request.session.get('user_type') == 'pekerja':
+            user_id = request.session.get('user_id')
+            conn, cur = get_db_connection()
+            if conn and cur:
+                # Get pekerja photo
+                cur.execute('SELECT linkfoto FROM PEKERJA WHERE id = %s', (user_id,))
+                pekerja_data = cur.fetchone()
+                
+                # Check if enrolled in this category
+                cur.execute("""
+                    SELECT 1 
+                    FROM PEKERJA_KATEGORI_JASA pk
+                    JOIN SUBKATEGORI_JASA s ON s.kategorijasaid = pk.kategorijasaid
+                    WHERE pk.pekerjaid = %s AND s.namasubkategori = %s
+                """, (user_id, subcategory_name))
+                
+                is_enrolled = cur.fetchone() is not None
+                
+                if pekerja_data:
+                    context['additional_attributes'] = {
+                        'foto_url': pekerja_data[0],
+                        'is_enrolled': is_enrolled
+                    }
+                cur.close()
+                conn.close()
         
         logger.info(f"Rendering template with context: {context}")
         return render(request, 'subcategory.html', context)
         
     except Exception as e:
         logger.error(f"Error in show_subcategory: {str(e)}", exc_info=True)
+        return redirect('main:show_home_page')
+
+def enroll_subcategory(request, subcategory_name):
+    if request.session.get('user_type') != 'pekerja':
+        return redirect('main:show_home_page')
+    
+    try:
+        conn, cur = get_db_connection()
+        if not conn or not cur:
+            logger.error("Could not establish database connection")
+            return redirect('main:show_home_page')
+        
+        user_id = request.session.get('user_id')
+        
+        # Get category ID for the subcategory
+        cur.execute("""
+            SELECT k.id
+            FROM SUBKATEGORI_JASA s
+            JOIN KATEGORI_JASA k ON s.kategorijasaid = k.id
+            WHERE s.namasubkategori = %s
+        """, [subcategory_name])
+        result = cur.fetchone()
+        
+        if not result:
+            logger.error(f"Subcategory not found: {subcategory_name}")
+            return redirect('main:show_home_page')
+        
+        category_id = result[0]
+        
+        # Check if already enrolled
+        cur.execute("""
+            SELECT 1 FROM PEKERJA_KATEGORI_JASA 
+            WHERE pekerjaid = %s AND kategorijasaid = %s
+        """, [user_id, category_id])
+        
+        if not cur.fetchone():
+            # Enroll in category if not already enrolled
+            cur.execute("""
+                INSERT INTO PEKERJA_KATEGORI_JASA (pekerjaid, kategorijasaid)
+                VALUES (%s, %s)
+            """, [user_id, category_id])
+            conn.commit()
+        
+        cur.close()
+        conn.close()
+        
+        return redirect('subkategori:show_subcategory', subcategory_name=subcategory_name)
+        
+    except Exception as e:
+        logger.error(f"Error in enroll_subcategory: {str(e)}", exc_info=True)
         return redirect('main:show_home_page')
