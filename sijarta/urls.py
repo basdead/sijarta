@@ -22,4 +22,5 @@ urlpatterns = [
     path('', include('main.urls')),
     path('profile/', include('profil.urls')),
     path('subcategory/', include('subkategori.urls')),
+    path('orders/', include('pemesanan_jasa.urls')),
 ]

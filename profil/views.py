@@ -63,7 +63,7 @@ def profile(request, username):
         # Get additional info based on user type
         if viewed_user_type == 'pekerja':
             cursor.execute(
-                'SELECT namabank, nomorrekening, npwp, linkfoto, rating, jmlpesananselesai '
+                'SELECT namabank, nomorrekening, npwp, LinkFoto, rating, jmlpesananselesai '
                 'FROM PEKERJA WHERE id = %s', (profile_user_id,)
             )
             pekerja_data = cursor.fetchone()
@@ -75,7 +75,7 @@ def profile(request, username):
                     'rating': pekerja_data[4],
                     'jumlah_pesanan_selesai': pekerja_data[5]
                 })
-                profile_data['foto_url'] = pekerja_data[3]  # linkfoto from PEKERJA table
+                profile_data['foto_url'] = pekerja_data[3]  # LinkFoto from PEKERJA table
                 form = PekerjaForm(initial=form_data)
         else:
             cursor.execute('SELECT level FROM PELANGGAN WHERE id = %s', (profile_user_id,))
@@ -84,17 +84,13 @@ def profile(request, username):
                 additional_attributes['level'] = pelanggan_data[0]
             form = PenggunaForm(initial=form_data)
 
-        # Get logged-in user's data for navbar
-        cursor.execute('SELECT linkfoto FROM PEKERJA WHERE id = %s', (request.session.get('user_id'),))
-        navbar_data = cursor.fetchone()
+        # Get navbar profile data - only for pekerja users
         navbar_attributes = {}
-        if request.session.get('user_type') == 'pekerja' and navbar_data:
-            navbar_attributes['foto_url'] = navbar_data[0]
-        else:
-            cursor.execute('SELECT linkfoto FROM "USER" WHERE id = %s', (request.session.get('user_id'),))
-            user_navbar_data = cursor.fetchone()
-            if user_navbar_data:
-                navbar_attributes['foto_url'] = user_navbar_data[0]
+        if request.session.get('user_type') == 'pekerja':
+            cursor.execute('SELECT LinkFoto FROM PEKERJA WHERE id = %s', (request.session.get('user_id'),))
+            navbar_data = cursor.fetchone()
+            if navbar_data:
+                navbar_attributes['foto_url'] = navbar_data[0]
 
         context = {
             'form': form,
@@ -300,12 +296,20 @@ def edit_profile(request, username):
 def get_user_profile_data(user_id, user_type, cursor):
     """Helper function to get user profile data for navbar"""
     profile_data = {}
-    if user_type == 'pekerja':
-        cursor.execute(
-            'SELECT linkfoto FROM PEKERJA WHERE id = %s',
-            (user_id,)
-        )
-        pekerja_data = cursor.fetchone()
-        if pekerja_data:
-            profile_data['foto_url'] = pekerja_data[0]
+    try:
+        if user_type == 'pekerja':
+            cursor.execute(
+                'SELECT p.LinkFoto FROM PEKERJA p WHERE p.Id = %s',
+                (user_id,)
+            )
+            pekerja_data = cursor.fetchone()
+            if pekerja_data:
+                profile_data['foto_url'] = pekerja_data[0]
+        else:
+            # For regular users, set a default profile picture or leave it empty
+            profile_data['foto_url'] = None
+    except Exception as e:
+        logger.error(f"Error fetching profile data: {str(e)}")
+        profile_data['foto_url'] = None
+    
     return profile_data

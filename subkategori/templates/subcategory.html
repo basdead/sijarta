@@ -146,7 +146,7 @@
                                 </div>
                                 {% if request.session.is_authenticated and request.session.user_type == 'pelanggan' %}
                                 <div class = "p_buttons">
-                                    <button class="order-session" onclick="window.location.href=''">Pesan Jasa</button>
+                                    <button class="order-session" onclick="{% if request.session.is_authenticated %}window.location.href='{% url 'pemesanan_jasa:order_form' subcategory.nama_subkategori|cut:' ' %}'{% else %}window.location.href='{% url 'main:login_user' %}'{% endif %}">Pesan Jasa</button>
                                 </div>
                                 {% endif %}
                             </div>
