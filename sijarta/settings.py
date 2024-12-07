@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'main',
     'profil',
-    'subkategori'
+    'subkategori',
+    'pemesanan_jasa',
 ]
 
 MIDDLEWARE = [

@@ -201,6 +201,14 @@ def login_user(request):
                     request.session['is_authenticated'] = True
                     request.session['user_type'] = 'pelanggan' if is_pelanggan else 'pekerja'
                     
+                    # Add debug logging
+                    logger.info('Setting session data:')
+                    logger.info(f'user_id: {request.session.get("user_id")}')
+                    logger.info(f'user_name: {request.session.get("user_name")}')
+                    logger.info(f'is_authenticated: {request.session.get("is_authenticated")}')
+                    logger.info(f'user_type: {request.session.get("user_type")}')
+                    request.session.modified = True
+                    
                     logger.info(f'User {user_name} successfully logged in')
                     return redirect('main:show_home_page')
                 else:

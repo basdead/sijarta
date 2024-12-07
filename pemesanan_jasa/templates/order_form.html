@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Order Jasa {{ subcategory.nama_subkategori }} - Sijarta{% endblock %}
+{% block content %}
+{% include 'navbar.html' %}
+<div class="pemesanan-content">
+    <div class="navigation">
+        <div class="navigation-buttons">
+            <button onclick="window.location.href='{% url 'main:show_home_page' %}'" class="navigation-button">
+                <div class="home horizontal-stack-info">
+                    <img src="https://www.svgrepo.com/show/500894/home.svg" alt="Home" style="width: 20px; height: 20px;">
+                    <span>Home</span>
+                </div>
+            </button>
+            <div class="path">
+                <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
+            </div>
+            <button onclick="window.location.href='/subcategory/{{ subcategory.nama_subkategori|cut:" " }}'" class="navigation-button" style="cursor: pointer;">
+                <div class="subcateg horizontal-stack-info">
+                    {% if category.nama_kategori == 'Deep Cleaning' %}
+                        <img src="https://www.svgrepo.com/show/490223/sofa.svg" alt="Deep Cleaning" style="margin-bottom: 2px; width: 15px; height: 15px;">
+                    {% elif category.nama_kategori == 'Hair Care' %}
+                        <img src="https://www.svgrepo.com/show/431704/hair.svg" alt="Hair Care" style="width: 20px; height: 20px;">
+                    {% elif category.nama_kategori == 'Home Cleaning' %}
+                        <img src="https://www.svgrepo.com/show/490589/broom-cleaning.svg" alt="Home Cleaning" style="width: 15px; height: 15px;">
+                    {% elif category.nama_kategori == 'Massage' %}
+                        <img src="https://www.svgrepo.com/show/220289/lotus-yoga.svg" alt="Massage" style="width: 15px; height: 15px;">
+                    {% elif category.nama_kategori == 'Service AC' %}
+                        <img src="https://www.svgrepo.com/show/503152/air-conditioner.svg" alt="Service AC" style="width: 20px; height: 20px;">
+                    {% endif %}
+                    <span>{{ category.nama_kategori }}</span>
+                </div>
+            </button>
+            <div class="path">
+                <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
+            </div>
+            <button onclick="window.location.href='/subcategory/{{ subcategory.nama_subkategori|cut:" " }}'" class="navigation-button" style="cursor: pointer;">
+                <div class="subcateg-name horizontal-stack-info">
+                    {% if category.nama_kategori == 'Deep Cleaning' %}
+                        <img src="https://www.svgrepo.com/show/490223/sofa.svg" alt="Deep Cleaning" style="margin-bottom: 2px; width: 15px; height: 15px;">
+                    {% elif category.nama_kategori == 'Hair Care' %}
+                        <img src="https://www.svgrepo.com/show/431704/hair.svg" alt="Hair Care" style="width: 20px; height: 20px;">
+                    {% elif category.nama_kategori == 'Home Cleaning' %}
+                        <img src="https://www.svgrepo.com/show/490589/broom-cleaning.svg" alt="Home Cleaning" style="width: 15px; height: 15px;">
+                    {% elif category.nama_kategori == 'Massage' %}
+                        <img src="https://www.svgrepo.com/show/220289/lotus-yoga.svg" alt="Massage" style="width: 15px; height: 15px;">
+                    {% elif category.nama_kategori == 'Service AC' %}
+                        <img src="https://www.svgrepo.com/show/503152/air-conditioner.svg" alt="Service AC" style="width: 20px; height: 20px;">
+                    {% endif %}
+                    <span>{{ subcategory.nama_subkategori }}</span>
+                </div>
+            </button>
+            <div class="path">
+                <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
+            </div>
+            <button class="navigation-button">
+                <div class="order horizontal-stack-info" style="color: #667a7b;">
+                    <img src="https://www.svgrepo.com/show/458003/order.svg" alt="Order" style="width: 20px; height: 20px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
+                    <span>Order Jasa</span>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <div class="pemesanan-container">
+        <div class="pemesanan-container-content">
+            <div class="pemesanan-area">
+                <div class="form-contents">
+                    <div class="pemesanan-text">
+                        <h1>Form Pemesanan</h1>
+                    </div>
+                    <form id="pemesanan-form" method="post">
+                        {% csrf_token %}
+                        
+                        <div class="form-group mb-3">
+                            <label>Tanggal Pemesanan</label>
+                            <input type="date" name="tgl_pemesanan" value="{{ current_date }}" readonly class="w-100">
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label>Tanggal Pekerjaan</label>
+                            <input type="date" name="tgl_pekerjaan" class="w-100" required min="{{ current_date }}">
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label>Waktu Pekerjaan</label>
+                            <input type="time" name="waktu_pekerjaan" class="w-100" required>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label>Sesi</label>
+                            <select name="sesi" id="sesi" class="w-100" required>
+                                <option value="">Pilih Sesi</option>
+                                {% for session in sessions %}
+                                    <option value="{{ session.sesi }}" data-price="{{ session.harga }}">{{ session.sesi }} Jam - Rp {{ session.harga|floatformat:0 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label>Kode Diskon (Opsional)</label>
+                            <input type="text" name="kode_diskon" id="kode_diskon" placeholder="Masukkan kode diskon" class="w-100">
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label>Total Pembayaran</label>
+                            <input type="text" id="total_pembayaran" readonly class="w-100">
+                            <input type="hidden" name="total_pembayaran" id="total_pembayaran_hidden">
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label>Metode Pembayaran</label>
+                            <select name="metode_bayar" class="w-100" required>
+                                <option value="">Pilih Metode Pembayaran</option>
+                                {% for method in payment_methods %}
+                                    <option value="{{ method.id }}">{{ method.nama }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="button-row">
+                            <button type="submit" class="submit-order">Pesan Jasa</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        padding-top: 70px;
+    }
+
+    button {
+        outline: none;
+    }
+
+    .pemesanan-content {
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .navigation-buttons {
+        display: flex;
+        margin-bottom: 20px;
+    }
+
+    .navigation-button {
+        padding: 0.3rem 0.8rem;
+        border-radius: 2rem;
+        background-color: #e9f0f1;
+        width: fit-content;
+        display: flex;
+        flex-direction: row;
+        border: none;
+    }
+
+    .horizontal-stack-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .pemesanan-container {
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #e9f0f1;
+        border-radius: 0.5rem;
+        width: 100%;
+    }
+
+    .pemesanan-container-content {
+        padding: 20px;
+        width: 100%;
+    }
+
+    .pemesanan-area {
+        width: 100%;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .form-contents {
+        width: 100%;
+        max-width: 600px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 15px;
+    }
+
+    .form-contents form {
+        width: 100%;
+    }
+
+    .pemesanan-text h1 {
+        font-size: 48px;
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+
+    .form-group {
+        width: 100%;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        background-color: #e9f0f1;
+        border: none;
+        outline: none;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        background-color: #dde5e6;
+    }
+
+    .button-row {
+        display: flex;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+
+    .submit-order {
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        background-color: #177E89;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 1.1rem;
+    }
+
+    .submit-order:hover {
+        background-color: #084c61;
+    }
+
+    /* Style for select placeholder */
+    :root {
+        --placeholder-color: #6c757d;
+    }
+
+    select {
+        color: #323031;
+    }
+
+    select option {
+        color: #323031;
+    }
+
+    select option:first-child {
+        color: var(--placeholder-color);
+    }
+
+    select:invalid,
+    select option[value=""] {
+        color: var(--placeholder-color);
+    }
+
+    select option:not([value=""]) {
+        color: #323031;
+    }
+
+    input[readonly] {
+        background-color: #e9ecef;
+        cursor: not-allowed;
+    }
+</style>
+
+{% block script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sesiSelect = document.getElementById('sesi');
+    const totalDisplay = document.getElementById('total_pembayaran');
+    const totalHidden = document.getElementById('total_pembayaran_hidden');
+    let currentPrice = 0;
+
+    function updateTotal() {
+        totalDisplay.value = `Rp ${currentPrice.toLocaleString('id-ID')}`;
+        totalHidden.value = currentPrice;
+    }
+
+    sesiSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        currentPrice = parseFloat(selectedOption.dataset.price || 0);
+        updateTotal();
+    });
+
+    // Initialize total display
+    updateTotal();
+});
+</script>
+{% endblock script %}
+{% endblock content %}
