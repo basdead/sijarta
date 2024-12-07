@@ -8,8 +8,39 @@ logger = logging.getLogger(__name__)
 # Create your views here.
 
 def show_subcategory(request, subcategory_name):
-    # Decode URL-encoded name and convert hyphens back to spaces
-    subcategory_name = unquote(subcategory_name).replace('-', ' ')
+    # Log the raw input
+    logger.info(f"Raw subcategory_name from URL: {subcategory_name!r}")
+    
+    # Decode URL-encoded name
+    subcategory_name = unquote(subcategory_name)
+    logger.info(f"After unquote: {subcategory_name!r}")
+    
+    # First remove any existing spaces
+    subcategory_name = subcategory_name.replace(' ', '')
+    
+    # Add space before 'AC' if it exists and isn't at the start
+    if 'AC' in subcategory_name and not subcategory_name.startswith('AC'):
+        subcategory_name = subcategory_name.replace('AC', ' AC')
+    
+    # Add spaces before other capital letters (except first letter and 'AC')
+    result = []
+    i = 0
+    while i < len(subcategory_name):
+        # Skip over 'AC' if we find it
+        if i < len(subcategory_name) - 1 and subcategory_name[i:i+2] == 'AC':
+            result.append(subcategory_name[i:i+2])
+            i += 2
+            continue
+            
+        # Add space before capitals (except first letter)
+        if i > 0 and subcategory_name[i].isupper():
+            result.append(' ')
+        result.append(subcategory_name[i])
+        i += 1
+    
+    subcategory_name = ''.join(result)
+    logger.info(f"After processing: {subcategory_name!r}")
+    
     logger.info(f"Looking for subcategory: {subcategory_name}")
     
     try:
@@ -60,7 +91,7 @@ def show_subcategory(request, subcategory_name):
             WHERE sj.namasubkategori = %s
             ORDER BY sesi
         """, [subcategory_name])
-        sessions = [{'sesi': row[0], 'harga': row[1]} for row in cur.fetchall()]
+        sessions = [{'sesi': row[0], 'harga': "{:,.0f}".format(row[1]).replace(",", ".")} for row in cur.fetchall()]
         
         # Fetch enrolled pekerja for this subcategory
         cur.execute("""
