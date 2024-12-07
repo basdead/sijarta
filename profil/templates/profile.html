@@ -14,10 +14,19 @@
             <div class="path">
                 <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
             </div>
-            <button onclick="window.location.href='{% url 'profil:profile' %}'" class="navigation-button">
+            <button onclick="window.location.href='{% url 'profil:profile' request.session.user_name|cut:' ' %}'" class="navigation-button">
+                <div class="home horizontal-stack-info">
+                    <img src="https://www.svgrepo.com/show/483464/person.svg" alt="Profile" style="width: 15px; height: 15px;">
+                    <span>Profile</span>
+                </div>
+            </button>
+            <div class="path">
+                <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
+            </div>
+            <button onclick="window.location.href='{% url 'profil:profile' request.session.user_name|cut:' ' %}'" class="navigation-button">
                 <div class="home horizontal-stack-info" style="color: #667a7b;">
                     <img src="https://www.svgrepo.com/show/483464/person.svg" alt="Profile" style="width: 15px; height: 15px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
-                    <span>Profile</span>
+                    <span>{{ profile.nama }}</span>
                 </div>
             </button>
         </div>
@@ -28,11 +37,11 @@
             <div class="profile-info">
                 <div class="main-info horizontal-stack">
                     <div class="avatar">
-                        {% if request.session.user_type == 'pelanggan' %}
+                        {% if viewed_user_type == 'pelanggan' and is_own_profile %}
                         <div class="profile-picture" style="width: 216px; height: 216px; background-color: #177E89; color: white; font-weight: bold; display: flex; justify-content: center; align-items: center; font-size: 6rem;">
-                            {{ request.session.user_name|slice:":1" }}
+                            {{ profile.nama|slice:":1" }}
                         </div>
-                        {% elif request.session.user_type == 'pekerja' %}
+                        {% else %}
                         <img src="{{ profile.foto_url }}" 
                             alt="Profile Picture" 
                             class="profile-picture" 
@@ -41,7 +50,7 @@
                     </div>
                     <div class="text-main-info">
                         <div class="username">
-                            <h1>{{ request.session.user_name }}</h1>
+                            <h1>{{ form.nama.value }}</h1>
                         </div>
                         <div class="mini-infos">
                             <div class="mini-info">
@@ -70,16 +79,14 @@
                             </div>
                         </div>
                         <div class = "p_buttons">
-                            {% if request.session.user_type == 'pelanggan' %}
-                            <button class="edit-profile" onclick="window.location.href='{% url 'profil:edit_profile' %}'">Update Profile</button>
-                            {% elif request.session.user_type == 'pekerja' %}
-                            <button class="edit-profile" onclick="window.location.href='{% url 'profil:edit_profile' %}'">Update Profile</button>
+                            {% if is_own_profile %}
+                                <button class="edit-profile" onclick="window.location.href='{% url 'profil:edit_profile' username=request.session.user_name|cut:' ' %}'">Update Profile</button>
                             {% endif %}
                         </div>
                     </div>
                 </div>
                 <div class="additional-info">
-                    {% if request.session.user_type == 'pelanggan' %}
+                    {% if viewed_user_type == 'pelanggan' %}
                     <div class="addt-infos-contents">
                         <div class="profile-item">
                             <span><strong>Saldo MyPay</strong></span>
@@ -90,7 +97,7 @@
                             <span style="float: right;">{{ additional_attributes.level }}</span>
                         </div>
                     </div>
-                    {% elif request.session.user_type == 'pekerja' %}
+                    {% elif viewed_user_type == 'pekerja' %}
                     <div class="addt-infos-contents row-1" style="margin-bottom: 1.5rem;">
                         <div class="profile-item">
                             <span><strong>Saldo MyPay</strong></span>

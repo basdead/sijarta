@@ -120,20 +120,20 @@
                     <div class="workers-grid">
                         {% for worker in enrolled_workers %}
                             {% if forloop.counter0|divisibleby:4 %}
-                                <div class="workers-row">
+                            <div class="workers-row">
                             {% endif %}
-                            <div class="worker-item">
-                                <div class="worker-info">
-                                    {% if worker.foto_url %}
-                                        <img src="{{ worker.foto_url }}" alt="{{ worker.nama }}" class="worker-photo">
-                                    {% else %}
-                                        <img src="https://www.svgrepo.com/show/384674/account-avatar-profile-user-11.svg" alt="Default Profile" class="worker-photo">
-                                    {% endif %}
-                                    <div class="workers-name">{{ worker.nama }}</div>
+                                <div class="worker-item" onclick="window.location.href='/profile/{{ worker.nama|cut:' ' }}/'">
+                                    <div class="worker-info">
+                                        {% if worker.foto_url %}
+                                            <img src="{{ worker.foto_url }}" alt="{{ worker.nama }}" class="worker-photo">
+                                        {% else %}
+                                            <img src="https://www.svgrepo.com/show/384674/account-avatar-profile-user-11.svg" alt="Default Profile" class="worker-photo">
+                                        {% endif %}
+                                        <div class="workers-name">{{ worker.nama }}</div>
+                                    </div>
                                 </div>
-                            </div>
                             {% if forloop.counter|divisibleby:4 or forloop.last %}
-                                </div>
+                             </div>
                             {% endif %}
                         {% empty %}
                             <div class="no-workers">
@@ -396,6 +396,7 @@
         background: white;
         border-radius: 8px;
         padding: 8px;
+        cursor: pointer;
     }
 
     .worker-info {

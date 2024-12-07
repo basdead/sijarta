@@ -26,15 +26,15 @@
         <div class="navbar-nav ms-auto">
             {% if request.session.is_authenticated %}
                 {% if request.session.user_type == 'pelanggan' %}
-                <a href="{% url 'profil:profile' %}" class="nav-item nav-link d-flex align-items-center">
+                <a href="/profile/{{ request.session.user_name|cut:' ' }}/" class="nav-item nav-link d-flex align-items-center">
                     <div class="rounded-circle d-flex justify-content-center align-items-center" style="width: 36px; height: 36px; background-color: #177E89; color: white; font-weight: bold; font-size: 1rem;">
                       {{ request.session.user_name|slice:":1" }}
                     </div>
                   <span class="ms-2">{{ request.session.user_name }} (Pengguna)</span>
                 </a>
                 {% elif request.session.user_type == 'pekerja' %}
-                <a href="{% url 'profil:profile' %}" class="nav-item nav-link d-flex align-items-center">
-                  <img src="{{ additional_attributes.foto_url }}" 
+                <a href="/profile/{{ request.session.user_name|cut:' ' }}/" class="nav-item nav-link d-flex align-items-center">
+                  <img src="{{ navbar_attributes.foto_url }}" 
                        class="rounded-circle" 
                        style="width: 36px; height: 36px; object-fit: cover;"
                        alt="{{ request.session.user_name }}'s profile picture">
