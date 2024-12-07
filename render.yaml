@@ -1,8 +1,8 @@
 databases:
   - name: sijarta
     plan: free
-    databaseName: postgres
-    user: postgres.zdpwcrvbgfcydcvrfese
+    databaseName: sijarta_db
+    user: sijarta_user
 
 services:
   - type: web
@@ -13,7 +13,7 @@ services:
     startCommand: "python -m gunicorn sijarta.asgi:application -k uvicorn.workers.UvicornWorker"
     envVars:
       - key: DATABASE_URL
-        value: postgresql://postgres.zdpwcrvbgfcydcvrfese:HOlJuL6NucqWnOkw@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
+        value: postgresql://sijarta_user:HOlJuL6NucqWnOkw@aws-0-ap-southeast-1.pooler.supabase.com:6543/sijarta_db
       - key: SECRET_KEY
         generateValue: true
       - key: WEB_CONCURRENCY
