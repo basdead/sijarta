@@ -88,45 +88,67 @@
                 </div>
                 <div class="additional-info">
                     {% if viewed_user_type == 'pelanggan' %}
-                    <div class="addt-infos-contents">
-                        <div class="profile-item">
-                            <span><strong>Saldo MyPay</strong></span>
-                            <span style="float: right;">{{ additional_attributes.saldomypay }}</span>
+                        {% if is_own_profile %}
+                        <div class="addt-infos-contents">
+                            <div class="profile-item">
+                                <span><strong>Saldo MyPay</strong></span>
+                                <span style="float: right;">{{ additional_attributes.saldomypay }}</span>
+                            </div>
+                            <div class="profile-item">
+                                <span><strong>Level</strong></span>
+                                <span style="float: right;">{{ additional_attributes.level }}</span>
+                            </div>
                         </div>
-                        <div class="profile-item">
-                            <span><strong>Level</strong></span>
-                            <span style="float: right;">{{ additional_attributes.level }}</span>
+                        {% else %}
+                        <div class="addt-infos-contents">
+                            <div class="profile-item">
+                                <span><strong>Level</strong></span>
+                                <span style="float: right;">{{ additional_attributes.level }}</span>
+                            </div>
                         </div>
-                    </div>
+                        {% endif %}
                     {% elif viewed_user_type == 'pekerja' %}
-                    <div class="addt-infos-contents row-1" style="margin-bottom: 1.5rem;">
-                        <div class="profile-item">
-                            <span><strong>Saldo MyPay</strong></span>
-                            <span style="float: right;">{{ additional_attributes.saldomypay }}</span>
+                        {% if is_own_profile %}
+                        <div class="addt-infos-contents row-1" style="margin-bottom: 1.5rem;">
+                            <div class="profile-item">
+                                <span><strong>Saldo MyPay</strong></span>
+                                <span style="float: right;">{{ additional_attributes.saldomypay }}</span>
+                            </div>
+                            <div class="profile-item">
+                                <span><strong>Nama Bank</strong></span>
+                                <span style="float: right;">{{ additional_attributes.nama_bank }}</span>
+                            </div>
+                            <div class="profile-item">
+                                <span><strong>Nomor Rekening</strong></span>
+                                <span style="float: right;">{{ additional_attributes.no_rekening }}</span>
+                            </div>
                         </div>
-                        <div class="profile-item">
-                            <span><strong>Nama Bank</strong></span>
-                            <span style="float: right;">{{ additional_attributes.nama_bank }}</span>
+                        <div class="addt-infos-contents">
+                            <div class="profile-item">
+                                <span><strong>NPWP</strong></span>
+                                <span style="float: right;">{{ additional_attributes.npwp }}</span>
+                            </div>
+                            <div class="profile-item">
+                                <span><strong>Rating</strong></span>
+                                <span style="float: right;">{{ additional_attributes.rating }}</span>
+                            </div>
+                            <div class="profile-item">
+                                <span><strong>Jumlah Pesanan Selesai</strong></span>
+                                <span style="float: right;">{{ additional_attributes.jumlah_pesanan_selesai }}</span>
+                            </div>
                         </div>
-                        <div class="profile-item">
-                            <span><strong>Nomor Rekening</strong></span>
-                            <span style="float: right;">{{ additional_attributes.no_rekening }}</span>
+                        {% else %}
+                        <div class="addt-infos-contents">
+                            <div class="profile-item">
+                                <span><strong>Rating</strong></span>
+                                <span style="float: right;">{{ additional_attributes.rating }}</span>
+                            </div>
+                            <div class="profile-item">
+                                <span><strong>Jumlah Pesanan Selesai</strong></span>
+                                <span style="float: right;">{{ additional_attributes.jumlah_pesanan_selesai }}</span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="addt-infos-contents">
-                        <div class="profile-item">
-                            <span><strong>NPWP</strong></span>
-                            <span style="float: right;">{{ additional_attributes.npwp }}</span>
-                        </div>
-                        <div class="profile-item">
-                            <span><strong>Rating</strong></span>
-                            <span style="float: right;">{{ additional_attributes.rating }}</span>
-                        </div>
-                        <div class="profile-item">
-                            <span><strong>Jumlah Pesanan Selesai</strong></span>
-                            <span style="float: right;">{{ additional_attributes.jumlah_pesanan_selesai }}</span>
-                        </div>
-                    </div>
+                        {% endif %}
                     {% endif %}
                 </div>
             </div>
