@@ -38,7 +38,7 @@
                             {% for category in categories %}
                                 <optgroup label="{{ category.nama_kategori }}">
                                     {% for subcategory in category.subcategories %}
-                                        <option value="{{ subcategory.id }}">{{ subcategory.nama_subkategori }}</option>
+                                        <option value="{{ subcategory.nama_subkategori }}">{{ subcategory.nama_subkategori }}</option>
                                     {% endfor %}
                                 </optgroup>
                             {% endfor %}
@@ -51,7 +51,7 @@
                             style="width: 100%; display: flex; justify-content: center; align-items: center; border-radius: 2rem; background-color: #cdddde; outline: none; box-shadow: none; appearance: none; padding: 0px 5px 0px 5px; background-image: url('https://www.svgrepo.com/show/522029/chevron-down.svg'); background-repeat: no-repeat; background-position: right 10px center; background-size: 20px;">
                             <option value="">Status Pesanan</option>
                             {% for status in order_statuses %}    
-                                <option value="{{ status.id }}">{{ status.status }}</option>
+                                <option value="{{ status.status }}">{{ status.status }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -100,6 +100,9 @@
                             Belum ada pesanan yang dibuat
                         </div>
                         {% endif %}
+                        <div class="no-matching-orders" style="display: none;">
+                            Tidak ada pesanan yang cocok
+                        </div>
                     </div>
                 </div>
             </div>
@@ -332,7 +335,7 @@
         background-color: #45a049;
     }
 
-    .no-orders {
+    .no-orders, .no-matching-orders {
         width: 100%;
         text-align: center;
         padding: 20px;
@@ -370,24 +373,45 @@
 </style>
 
 <script>
-    document.getElementById('subcategory-dropdown').addEventListener('change', function() {
-        const selectedSubcategory = this.value;
-        const rows = document.querySelectorAll('tbody tr');
+    function filterOrders() {
+        const selectedSubcategory = document.getElementById('subcategory-dropdown').value;
+        const selectedStatus = document.getElementById('order-status-dropdown').value;
         
-        rows.forEach(row => {
-            const subcategoryCell = row.querySelector('td:nth-child(5)'); // Adjust index based on your table structure
-            if (!selectedSubcategory || subcategoryCell.textContent === selectedSubcategory) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
+        // Only proceed if there are orders
+        const orderItems = document.querySelectorAll('.order-item');
+        if (orderItems.length === 0) return;
+        
+        const orderItemsContainer = document.querySelector('.order-items');
+        const noMatchingOrders = document.querySelector('.no-matching-orders');
+        let visibleOrders = 0;
+        
+        orderItems.forEach(item => {
+            const subkategoriCell = item.querySelector('.order-details .detail-cell:first-child');
+            const statusCell = item.querySelector('.order-details .detail-cell:nth-child(5)');
+            
+            const matchesSubcategory = !selectedSubcategory || subkategoriCell.textContent.trim() === selectedSubcategory;
+            const matchesStatus = !selectedStatus || statusCell.textContent.trim() === selectedStatus;
+            
+            const isVisible = matchesSubcategory && matchesStatus;
+            item.style.display = isVisible ? '' : 'none';
+            if (isVisible) visibleOrders++;
         });
-    });
 
-    function viewOrderDetails(orderId) {
-        // TODO: Implement order details view
-        alert('View details for order #' + orderId);
+        // Show/hide no matching orders message and container
+        if (noMatchingOrders && orderItemsContainer) {
+            if (visibleOrders === 0) {
+                orderItemsContainer.style.display = 'none';
+                noMatchingOrders.style.display = '';
+            } else {
+                orderItemsContainer.style.display = '';
+                noMatchingOrders.style.display = 'none';
+            }
+        }
     }
+
+    // Add event listeners to dropdowns
+    document.getElementById('subcategory-dropdown').addEventListener('change', filterOrders);
+    document.getElementById('order-status-dropdown').addEventListener('change', filterOrders);
 
     // Search functionality
     const searchInput = document.getElementById('search-input');
@@ -409,19 +433,34 @@
 
     function performSearch() {
         const searchTerm = searchInput.value.toLowerCase();
-        const orderRows = document.querySelectorAll('.order-row');
+        const orderItems = document.querySelectorAll('.order-item');
+        const orderItemsContainer = document.querySelector('.order-items');
+        const noMatchingOrders = document.querySelector('.no-matching-orders');
+        let visibleOrders = 0;
         
-        orderRows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            if (text.includes(searchTerm)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
+        orderItems.forEach(item => {
+            const cells = item.querySelectorAll('.detail-cell');
+            const text = Array.from(cells).map(cell => cell.textContent.toLowerCase()).join(' ');
+            const isVisible = text.includes(searchTerm);
+            
+            item.style.display = isVisible ? '' : 'none';
+            if (isVisible) visibleOrders++;
         });
+
+        // Show/hide no matching orders message and container
+        if (noMatchingOrders && orderItemsContainer) {
+            if (visibleOrders === 0) {
+                orderItemsContainer.style.display = 'none';
+                noMatchingOrders.style.display = '';
+            } else {
+                orderItemsContainer.style.display = '';
+                noMatchingOrders.style.display = 'none';
+            }
+        }
     }
 
     // Search in real-time as user types
     searchInput.addEventListener('input', performSearch);
 </script>
+
 {% endblock %}
