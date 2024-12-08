@@ -100,7 +100,7 @@
                                         {% if order.status == 'Menunggu Pembayaran' or order.status == 'Mencari Pekerja Terdekat' %}
                                             <form action="{% url 'pemesanan_jasa:cancel_order' order.id %}" method="POST" style="display: inline;">
                                                 {% csrf_token %}
-                                                <button type="submit" class="table-cancel-button" onclick="return confirm('Are you sure you want to cancel this order?')">Batalkan</button>
+                                                <button type="submit" class="table-cancel-button" onclick="return confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')">Batalkan</button>
                                             </form>
                                         {% elif order.status == 'Pesanan Selesai' %}
                                             <button type="submit" class="table-button">Buat Testimoni</button>
@@ -405,6 +405,11 @@
 
     .discounted-price {
         color: #177E89;
+        font-weight: bold;
+    }
+
+    .status-cancelled {
+        color: #9b4747;
         font-weight: bold;
     }
 </style>
