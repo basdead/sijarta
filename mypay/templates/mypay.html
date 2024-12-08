@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}MyPay{% endblock %}
+{% block content %}
+{% include 'navbar.html' %}
+
+<div class="mypay-content">
+    <div class="navigation">
+        <div class="navigation-buttons">
+            <button onclick="window.location.href='{% url 'main:show_home_page' %}'" class="navigation-button">
+                <div class="home horizontal-stack-info">
+                    <img src="https://www.svgrepo.com/show/500894/home.svg" alt="Home" style="width: 20px; height: 20px;">
+                    <span>Home</span>
+                </div>
+            </button>
+            <div class="path">
+                <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
+            </div>
+            <button class="navigation-button">
+                <div class="mypay horizontal-stack-info" style="color: #667a7b;">
+                    <img src="https://www.svgrepo.com/show/522339/wallet.svg" alt="MyPay" style="width: 15px; height: 15px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
+                    <span>MyPay</span>
+                </div>
+            </button>
+        </div>
+    </div>
+    <div class="mypay-container">
+        <div class="mypay-container-content">
+            <div class="mypay-area">
+                <div class="mypay-text">
+                    <h1>MyPay</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --placeholder-color: #6c757d;
+        --text-color: #323031;
+    }
+
+    body {
+        padding-top: 70px; /* Adjust this value based on the height of your navbar */
+    }
+
+    button {
+        outline: none;
+    }
+
+    .mypay-content {
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .mypay-container {
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #e9f0f1;
+        border-radius: 0.5rem;
+        width: 100%;  /* Added */
+    }
+
+    .navigation-buttons {
+        display: flex;
+        margin-bottom: 20px;
+    }
+
+    .navigation-button {
+        padding: 0.3rem 0.8rem;
+        border-radius: 2rem;
+        background-color: #e9f0f1;
+        width: fit-content;
+        display: flex;
+        flex-direction: row;
+        border: none;
+    }
+
+    .horizontal-stack-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .mypay-container-content {
+        padding: 20px;
+        width: 100%;  /* Added */
+    }
+
+    .mypay-area {
+        width: 100%;
+        padding: 30px;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: stretch;
+        gap: 2rem;
+    }
+
+    .mypay-text {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .mypay-text h1 {
+        font-weight: bold;
+        font-size: 48px;
+        text-align: center;
+    }
+</style>
+<script>
+
+</script>
+{% endblock content %}
