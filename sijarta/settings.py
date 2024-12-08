@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'profil',
     'subkategori',
     'pemesanan_jasa',
+    'diskon'
 ]
 
 MIDDLEWARE = [

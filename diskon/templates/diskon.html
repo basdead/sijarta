@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block meta %}
+<title>Diskon - Sijarta</title>
+{% endblock meta %}
+
+{% block content %}
+<div class="container" style="margin-top: 6rem;">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Diskon Tersedia</h1>
+            <div class="discount-container">
+                <!-- Discount items will go here -->
+                <div class="no-discounts">
+                    Belum ada diskon yang tersedia
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .discount-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .no-discounts {
+        width: 100%;
+        text-align: center;
+        padding: 20px;
+        color: #666;
+    }
+</style>
+{% endblock content %}
