@@ -1,4 +1,5 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse, Http404
 from utils.query import get_db_connection
 from urllib.parse import unquote
 from datetime import datetime
@@ -6,8 +7,10 @@ from django.utils import timezone
 from zoneinfo import ZoneInfo
 import logging
 import re
-from django.http import Http404
 from django.contrib import messages
+from datetime import timedelta
+from django.views.decorators.http import require_http_methods
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -86,37 +89,29 @@ def order_jasa(request, subcategory_name):
         sessions = [
             {
                 'sesi': row[0], 
-                'harga': float(row[1]) if row[1] is not None else 0  # Raw price as float
+                'harga': float(row[1]) if row[1] is not None else 0
             }
             for row in cursor.fetchall()
         ]
 
         # Get pre-selected session from URL parameter
         selected_session = request.GET.get('selected_session')
-        logger.info(f"Selected session from URL: {selected_session}")
-        logger.info(f"Session type: {type(selected_session)}")
-        logger.info(f"Available sessions: {sessions}")
-
         if selected_session:
             try:
                 selected_session = int(selected_session)
-                logger.info(f"Converted selected_session to int: {selected_session}")
-                # Verify selected session exists
                 session_exists = any(session.get('sesi') == selected_session for session in sessions)
-                logger.info(f"Session exists in available sessions: {session_exists}")
                 if not session_exists:
-                    logger.warning(f"Selected session {selected_session} not found in available sessions")
                     selected_session = None
-            except (ValueError, TypeError) as e:
-                logger.error(f"Error converting selected_session: {e}")
+            except (ValueError, TypeError):
                 selected_session = None
 
         # Handle form submission
         if request.method == 'POST':
             tgl_pemesanan = request.POST.get('tgl_pemesanan')
             sesi = request.POST.get('sesi')
-            kode_diskon = request.POST.get('kode_diskon') or None
+            kode_diskon = request.POST.get('kode_diskon')
             metode_bayar = request.POST.get('metode_bayar')
+            total_pembayaran = request.POST.get('total_pembayaran')  # Get the actual total after discount
 
             # Get status based on payment method
             cursor.execute('SELECT nama FROM METODE_BAYAR WHERE id = %s', (metode_bayar,))
@@ -127,12 +122,85 @@ def order_jasa(request, subcategory_name):
             else:
                 status = 'Mencari Pekerja Terdekat'
 
-            # Get session price
+            # Get session price (original price)
             cursor.execute('SELECT harga FROM SESI_LAYANAN WHERE SubkategoriId = %s AND sesi = %s', 
                          (subcategory_data[0], sesi))
             session_price = cursor.fetchone()[0]
 
-            # Insert new order
+            # Initialize is_promo
+            is_promo = False
+
+            # If discount code is provided, validate it
+            if kode_diskon:
+                # First check if it exists in DISKON table
+                cursor.execute('''
+                    SELECT 1 FROM DISKON WHERE Kode = %s
+                ''', (kode_diskon,))
+                
+                if not cursor.fetchone():
+                    messages.error(request, 'Invalid discount code')
+                    return render(request, 'order_form.html', {
+                        'subcategory': {
+                            'id': subcategory_data[0],
+                            'nama_subkategori': subcategory_data[1],
+                            'deskripsi': subcategory_data[2]
+                        },
+                        'category': {'nama_kategori': subcategory_data[3]},
+                        'sessions': sessions,
+                        'selected_session': selected_session,
+                        'payment_methods': [{'id': row[0], 'nama': row[1]} for row in cursor.fetchall()],
+                        'current_date': get_user_date(request)
+                    })
+
+                # Then check if it's a PROMO
+                cursor.execute('''
+                    SELECT TglAkhirBerlaku
+                    FROM PROMO
+                    WHERE Kode = %s
+                ''', (kode_diskon,))
+                
+                promo = cursor.fetchone()
+                if promo:
+                    # It's a PROMO, check if it's expired
+                    if promo[0] < datetime.now().date():
+                        messages.error(request, 'This promo has expired')
+                        return render(request, 'order_form.html', {
+                            'subcategory': {
+                                'id': subcategory_data[0],
+                                'nama_subkategori': subcategory_data[1],
+                                'deskripsi': subcategory_data[2]
+                            },
+                            'category': {'nama_kategori': subcategory_data[3]},
+                            'sessions': sessions,
+                            'selected_session': selected_session,
+                            'payment_methods': [{'id': row[0], 'nama': row[1]} for row in cursor.fetchall()],
+                            'current_date': get_user_date(request)
+                        })
+                else:
+                    # Not a PROMO, check if it's a VOUCHER
+                    cursor.execute('''
+                        SELECT 1
+                        FROM VOUCHER v
+                        JOIN TR_PEMBELIAN_VOUCHER tr ON v.Kode = tr.IdVoucher
+                        WHERE v.Kode = %s AND tr.IdPelanggan = %s
+                    ''', (kode_diskon, user_id))
+                    
+                    if not cursor.fetchone():
+                        messages.error(request, 'Invalid voucher or voucher not purchased by this user')
+                        return render(request, 'order_form.html', {
+                            'subcategory': {
+                                'id': subcategory_data[0],
+                                'nama_subkategori': subcategory_data[1],
+                                'deskripsi': subcategory_data[2]
+                            },
+                            'category': {'nama_kategori': subcategory_data[3]},
+                            'sessions': sessions,
+                            'selected_session': selected_session,
+                            'payment_methods': [{'id': row[0], 'nama': row[1]} for row in cursor.fetchall()],
+                            'current_date': get_user_date(request)
+                        })
+
+            # Insert new order with the actual total_pembayaran
             cursor.execute('''
                 INSERT INTO TR_PEMESANAN_JASA (
                     TglPemesanan, TglPekerjaan, WaktuPekerjaan,
@@ -145,11 +213,11 @@ def order_jasa(request, subcategory_name):
                 tgl_pemesanan,
                 tgl_pemesanan,  # TglPekerjaan same as TglPemesanan for now
                 datetime.now(),  # WaktuPekerjaan as current timestamp
-                session_price,  # Use session price as total cost
+                total_pembayaran,  # Use the actual total after discount
                 user_id,
                 subcategory_data[0],  # SubkategoriId
                 sesi,
-                kode_diskon,
+                kode_diskon if (kode_diskon and not is_promo) else None,  # Set IdDiskon to NULL if no code or if it's a PROMO
                 metode_bayar
             ))
             
@@ -157,9 +225,6 @@ def order_jasa(request, subcategory_name):
             new_order_id = cursor.fetchone()[0]
 
             # Get status ID based on payment method
-            cursor.execute('SELECT nama FROM METODE_BAYAR WHERE id = %s', (metode_bayar,))
-            payment_method = cursor.fetchone()
-            
             if payment_method and payment_method[0] == 'MyPay':
                 status_name = 'Menunggu Pembayaran'
             else:
@@ -204,14 +269,106 @@ def order_jasa(request, subcategory_name):
             'payment_methods': payment_methods,
             'current_date': get_user_date(request)
         }
-
+        
         return render(request, 'order_form.html', context)
-
+        
     except Exception as e:
         logger.error(f"Error in order_jasa: {str(e)}")
-        messages.error(request, 'An error occurred while processing your request')
+        messages.error(request, 'An error occurred while processing your order')
         return redirect('main:show_home_page')
+        
+    finally:
+        cursor.close()
+        connection.close()
 
+
+@require_http_methods(["POST"])
+def validate_discount(request):
+    """
+    Validates a discount code and returns the discount amount if valid
+    """
+    kode_diskon = request.POST.get('kode_diskon')
+    total_amount = float(request.POST.get('total_amount', 0))
+    
+    if not kode_diskon:
+        return JsonResponse({'error': 'No discount code provided'}, status=400)
+        
+    connection, cursor = get_db_connection()
+    if connection is None or cursor is None:
+        return JsonResponse({'error': 'Database connection failed'}, status=500)
+        
+    try:
+        # First check if code exists in DISKON table
+        cursor.execute('''
+            SELECT d.Kode, d.Potongan, d.MinTrPemesanan
+            FROM DISKON d
+            WHERE d.Kode = %s
+        ''', (kode_diskon,))
+        
+        diskon = cursor.fetchone()
+        if not diskon:
+            return JsonResponse({'error': 'Invalid discount code'}, status=400)
+            
+        kode, potongan, min_transaksi = diskon
+        
+        # Check minimum transaction amount
+        if total_amount < min_transaksi:
+            return JsonResponse({
+                'success': False,
+                'error': f'Minimum transaction amount is Rp {min_transaksi:,.0f}',
+                'min_transaksi': min_transaksi
+            }, status=400)
+            
+        # Check if it's a PROMO
+        cursor.execute('''
+            SELECT TglAkhirBerlaku
+            FROM PROMO
+            WHERE Kode = %s
+        ''', (kode_diskon,))
+        
+        promo = cursor.fetchone()
+        if promo:
+            tgl_akhir = promo[0]
+            if tgl_akhir < datetime.now().date():
+                return JsonResponse({'error': 'Promo has expired'}, status=400)
+        else:
+            # If not PROMO, check if it's a VOUCHER
+            cursor.execute('''
+                SELECT v.JmlHariBerlaku, v.TglPembelian, v.KuotaPenggunaan,
+                       COUNT(t.IdDiskon) as used_count
+                FROM VOUCHER v
+                LEFT JOIN TR_PEMESANAN_JASA t ON v.Kode = t.IdDiskon
+                WHERE v.Kode = %s
+                GROUP BY v.Kode, v.JmlHariBerlaku, v.TglPembelian, v.KuotaPenggunaan
+            ''', (kode_diskon,))
+            
+            voucher = cursor.fetchone()
+            if not voucher:
+                return JsonResponse({'error': 'Invalid voucher'}, status=400)
+                
+            jml_hari, tgl_pembelian, kuota, used_count = voucher
+            
+            # Check if voucher has expired
+            expiry_date = tgl_pembelian + timedelta(days=jml_hari)
+            if expiry_date < datetime.now().date():
+                return JsonResponse({'error': 'Voucher has expired'}, status=400)
+            
+            # Check usage quota
+            if used_count >= kuota:
+                return JsonResponse({'error': 'Voucher usage limit reached'}, status=400)
+        
+        # If we get here, the discount is valid
+        return JsonResponse({
+            'success': True,
+            'potongan': float(potongan),
+            'min_transaksi': float(min_transaksi),
+            'message': 'Discount applied successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error validating discount: {str(e)}")
+        return JsonResponse({'error': 'Error validating discount'}, status=500)
+        
     finally:
         cursor.close()
         connection.close()
@@ -286,7 +443,7 @@ def show_my_orders(request):
                 sk.id as subkategori_id,
                 u.nama as nama_pekerja,
                 s.status,
-                sl.harga
+                sl.harga as original_harga
             FROM TR_PEMESANAN_JASA p
             JOIN SUBKATEGORI_JASA sk ON p.idkategorijasa = sk.id
             LEFT JOIN TR_PEMESANAN_STATUS ps ON p.id = ps.idtrpemesanan
@@ -295,17 +452,24 @@ def show_my_orders(request):
             LEFT JOIN "USER" u ON w.id = u.id
             LEFT JOIN SESI_LAYANAN sl ON (sk.id = sl.subkategoriid AND p.sesi = sl.sesi)
             WHERE p.idpelanggan = %s
-            ORDER BY p.tglpemesanan DESC
+            ORDER BY p.tglpemesanan ASC
         ''', (user_id,))
         
         orders = []
         for row in cursor.fetchall():
+            total_biaya = float(row[4]) if row[4] is not None else 0
+            original_harga = float(row[10]) if row[10] is not None else total_biaya
+            
+            # If total_biaya is less than original_harga, it means there's a discount
+            is_discounted = total_biaya < original_harga
+            
             orders.append({
                 'id': row[0],
                 'tanggal_pemesanan': row[1],
                 'tanggal_pekerjaan': row[2],
                 'waktu_pekerjaan': row[3],
-                'harga': row[4],  # Pass raw number
+                'harga': original_harga if is_discounted else total_biaya,  # Show original price only if discounted
+                'total_pembayaran': total_biaya,  # Always show total_biaya
                 'sesi_layanan': row[5],
                 'subkategori_jasa': {'nama': row[6], 'id': row[7]},
                 'pekerja': {'nama': row[8]},
@@ -328,3 +492,61 @@ def show_my_orders(request):
     finally:
         cursor.close()
         connection.close()
+
+
+@require_http_methods(["POST"])
+def cancel_order(request, order_id):
+    """
+    View for canceling an order
+    """
+    # Check authentication
+    is_authenticated = request.session.get('is_authenticated', False)
+    user_type = request.session.get('user_type', None)
+    user_id = request.session.get('user_id', None)
+    
+    if not is_authenticated or not user_type or not user_id:
+        messages.error(request, 'Please log in to continue')
+        return redirect('main:login_user')
+    
+    if user_type != 'pelanggan':
+        messages.error(request, 'Only customers can cancel orders')
+        return redirect('main:show_home_page')
+
+    connection, cursor = get_db_connection()
+    if connection is None or cursor is None:
+        messages.error(request, 'Database connection failed')
+        return redirect('main:show_home_page')
+
+    try:
+        # Convert order_id to string for PostgreSQL UUID comparison
+        order_id_str = str(order_id)
+        
+        # First verify that this order belongs to the current user
+        cursor.execute('''
+            SELECT id FROM TR_PEMESANAN_JASA 
+            WHERE id::text = %s AND idpelanggan = %s
+        ''', (order_id_str, user_id))
+        
+        if not cursor.fetchone():
+            messages.error(request, 'Order not found or unauthorized')
+            return redirect('pemesanan_jasa:show_my_orders')
+
+        # Delete from TR_PEMESANAN_STATUS first (foreign key constraint)
+        cursor.execute('DELETE FROM TR_PEMESANAN_STATUS WHERE idtrpemesanan::text = %s', (order_id_str,))
+        
+        # Then delete from TR_PEMESANAN_JASA
+        cursor.execute('DELETE FROM TR_PEMESANAN_JASA WHERE id::text = %s', (order_id_str,))
+        
+        connection.commit()
+        messages.success(request, 'Order cancelled successfully')
+
+    except Exception as e:
+        logger.error(f"Error in cancel_order: {str(e)}")
+        connection.rollback()
+        messages.error(request, 'An error occurred while canceling your order')
+    
+    finally:
+        cursor.close()
+        connection.close()
+    
+    return redirect('pemesanan_jasa:show_my_orders')

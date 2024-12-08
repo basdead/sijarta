@@ -82,12 +82,26 @@
                                 <div class="order-details">
                                     <div class="detail-cell">{{ order.subkategori_jasa.nama }}</div>
                                     <div class="detail-cell">{{ order.sesi_layanan }}</div>
-                                    <div class="detail-cell">{{ order.harga|currency_format }}</div>
+                                    <div class="detail-cell">
+                                        {% if order.total_pembayaran < order.harga %}
+                                            <div class="price-container">
+                                                <div class="original-price">{{ order.harga|currency_format }}</div>
+                                                <div>{{ order.total_pembayaran|currency_format }}</div>
+                                            </div>
+                                        {% else %}
+                                            <div class="price-container">
+                                                <div>{{ order.total_pembayaran|currency_format }}</div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                     <div class="detail-cell">{{ order.pekerja.nama }}</div>
                                     <div class="detail-cell">{{ order.status }}</div>
                                     <div class="detail-cell button-row">
                                         {% if order.status == 'Menunggu Pembayaran' or order.status == 'Mencari Pekerja Terdekat' %}
-                                            <button type="submit" class="table-cancel-button">Batalkan</button>
+                                            <form action="{% url 'pemesanan_jasa:cancel_order' order.id %}" method="POST" style="display: inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="table-cancel-button" onclick="return confirm('Are you sure you want to cancel this order?')">Batalkan</button>
+                                            </form>
                                         {% elif order.status == 'Pesanan Selesai' %}
                                             <button type="submit" class="table-button">Buat Testimoni</button>
                                         {% endif %}
@@ -365,11 +379,33 @@
     .table-cancel-button {
         padding: 0.6rem 1.2rem;
         border-radius: 2rem;
-        background-color: #a33b3b;
+        background-color: #9b4747;
         color: white;
         border: none;
         cursor: pointer;
         font-size: 1.1rem;
+    }
+
+    .table-cancel-button:hover {
+        background-color: #a11f1f;
+    }
+
+    .price-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.2rem;
+    }
+
+    .original-price {
+        text-decoration: line-through;
+        color: #666;
+        font-size: 0.8em;
+    }
+
+    .discounted-price {
+        color: #177E89;
+        font-weight: bold;
     }
 </style>
 
