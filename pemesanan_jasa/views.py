@@ -8,7 +8,6 @@ import logging
 import re
 from django.http import Http404
 from django.contrib import messages
-import pytz
 
 logger = logging.getLogger(__name__)
 
