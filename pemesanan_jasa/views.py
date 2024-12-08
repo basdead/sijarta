@@ -531,11 +531,36 @@ def cancel_order(request, order_id):
             messages.error(request, 'Order not found or unauthorized')
             return redirect('pemesanan_jasa:show_my_orders')
 
-        # Delete from TR_PEMESANAN_STATUS first (foreign key constraint)
-        cursor.execute('DELETE FROM TR_PEMESANAN_STATUS WHERE idtrpemesanan::text = %s', (order_id_str,))
+        # Update the status in TR_PEMESANAN_STATUS
+        current_time = timezone.now()
         
-        # Then delete from TR_PEMESANAN_JASA
-        cursor.execute('DELETE FROM TR_PEMESANAN_JASA WHERE id::text = %s', (order_id_str,))
+        # First, get the ID of the "Pesanan Dibatalkan" status
+        cursor.execute('''
+            SELECT Id FROM STATUS_PEMESANAN 
+            WHERE Status = 'Pesanan Dibatalkan'
+        ''')
+        status_id = cursor.fetchone()
+        
+        if not status_id:
+            # If status doesn't exist, create it
+            cursor.execute('''
+                INSERT INTO STATUS_PEMESANAN (Status)
+                VALUES ('Pesanan Dibatalkan')
+                RETURNING Id
+            ''')
+            status_id = cursor.fetchone()
+
+        # Delete any existing status for this order
+        cursor.execute('''
+            DELETE FROM TR_PEMESANAN_STATUS
+            WHERE IdTrPemesanan = %s
+        ''', (order_id,))
+        
+        # Insert the new cancelled status
+        cursor.execute('''
+            INSERT INTO TR_PEMESANAN_STATUS (IdTrPemesanan, IdStatus, TglWaktu)
+            VALUES (%s, %s, %s)
+        ''', (order_id, status_id[0], current_time))
         
         connection.commit()
         messages.success(request, 'Order cancelled successfully')
