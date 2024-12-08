@@ -100,12 +100,14 @@
                         <div class="form-group mb-3">
                             <label>Kode Diskon (Opsional)</label>
                             <input type="text" name="kode_diskon" id="kode_diskon" placeholder="Masukkan kode diskon" class="w-100">
+                            <div class="discount-feedback"></div>
                         </div>
 
                         <div class="form-group mb-3">
                             <label>Total Pembayaran</label>
                             <input type="text" id="total_pembayaran" readonly class="w-100">
                             <input type="hidden" name="total_pembayaran" id="total_pembayaran_hidden">
+                            <input type="hidden" name="has_discount" id="has_discount" value="false">
                         </div>
 
                         <div class="form-group mb-3">
@@ -290,6 +292,29 @@
         background-color: #e9ecef;
         cursor: not-allowed;
     }
+
+    #kode_diskon.success {
+        border-color: #28a745;
+        background-color: #d4edda;
+    }
+
+    #kode_diskon.error {
+        border-color: #dc3545;
+        background-color: #f8d7da;
+    }
+
+    .discount-feedback {
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    #kode_diskon.success + .discount-feedback {
+        color: #28a745;
+    }
+
+    #kode_diskon.error + .discount-feedback {
+        color: #dc3545;
+    }
 </style>
 
 {% block script %}
@@ -308,37 +333,135 @@ document.addEventListener('DOMContentLoaded', function() {
     const sesiSelect = document.getElementById('sesi');
     const totalDisplay = document.getElementById('total_pembayaran');
     const totalHidden = document.getElementById('total_pembayaran_hidden');
+    const discountInput = document.getElementById('kode_diskon');
+    const hasDiscountField = document.getElementById('has_discount');
+    const discountFeedback = document.createElement('div');
+    discountFeedback.className = 'discount-feedback';
+    discountInput.parentNode.appendChild(discountFeedback);
+    
     let currentPrice = 0;
+    let currentDiscount = 0;
+    let originalPrice = 0;
 
     function formatPrice(price) {
-        // Format with Indonesian number format (using . as thousand separator)
-        return new Intl.NumberFormat('id-ID', { 
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-            style: 'decimal'
-        }).format(price).replace(',', '.');
+        return new Intl.NumberFormat('id-ID').format(price);
     }
 
     function updateTotal() {
-        totalDisplay.value = `Rp ${formatPrice(currentPrice)}`;
-        totalHidden.value = currentPrice;
+        const finalPrice = Math.max(0, currentPrice - currentDiscount);
+        totalDisplay.value = `Rp ${formatPrice(finalPrice)}`;
+        totalHidden.value = finalPrice;
+        
+        // Update the has_discount flag and UI only if there's a valid discount
+        if (currentDiscount > 0 && finalPrice < originalPrice) {
+            hasDiscountField.value = 'true';
+            discountInput.classList.add('success');
+            discountInput.classList.remove('error');
+            discountFeedback.textContent = `Discount applied: Rp ${formatPrice(currentDiscount)}`;
+        } else {
+            hasDiscountField.value = 'false';
+            discountInput.classList.remove('success', 'error');
+            discountFeedback.textContent = '';
+        }
     }
 
+    function validateDiscount() {
+        const code = discountInput.value.trim();
+        if (!code) {
+            currentDiscount = 0;
+            updateTotal();
+            discountFeedback.textContent = '';
+            discountInput.classList.remove('success', 'error');
+            return;
+        }
+
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        // Create form data
+        const formData = new FormData();
+        formData.append('kode_diskon', code);
+        formData.append('total_amount', currentPrice);
+
+        // Send validation request
+        fetch('{% url "pemesanan_jasa:validate_discount" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                currentDiscount = data.potongan;
+                discountInput.classList.add('success');
+                discountInput.classList.remove('error');
+                discountFeedback.textContent = `Discount applied: Rp ${formatPrice(data.potongan)}`;
+            } else {
+                currentDiscount = 0;
+                discountInput.classList.add('error');
+                discountInput.classList.remove('success');
+                if (data.min_transaksi) {
+                    discountFeedback.textContent = `Minimum transaction amount required: Rp ${formatPrice(data.min_transaksi)}`;
+                } else {
+                    discountFeedback.textContent = data.error;
+                }
+            }
+            updateTotal();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            currentDiscount = 0;
+            discountInput.classList.add('error');
+            discountInput.classList.remove('success');
+            discountFeedback.textContent = 'Error validating discount code';
+            updateTotal();
+        });
+    }
+
+    // Add event listeners
     sesiSelect.addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
-        currentPrice = parseInt(selectedOption.dataset.price || 0);
-        updateTotal();
+        originalPrice = parseInt(selectedOption.dataset.price || 0);
+        currentPrice = originalPrice;
+        validateDiscount();  // Revalidate discount when price changes
     });
+
+    discountInput.addEventListener('change', validateDiscount);
+    discountInput.addEventListener('input', validateDiscount);  // Real-time validation
 
     // Initialize total display if there's a pre-selected option
     const selectedOption = sesiSelect.options[sesiSelect.selectedIndex];
     if (selectedOption && selectedOption.value) {
-        currentPrice = parseInt(selectedOption.dataset.price || 0);
-        updateTotal();
+        originalPrice = parseInt(selectedOption.dataset.price || 0);
+        currentPrice = originalPrice;
+        validateDiscount();
     } else {
         updateTotal();
     }
 });
+
+// Messages handling
+const messages = {
+    success: function(message) {
+        const discountInput = document.getElementById('kode_diskon');
+        discountInput.classList.remove('error');
+        discountInput.classList.add('success');
+    },
+    error: function(message) {
+        const discountInput = document.getElementById('kode_diskon');
+        discountInput.classList.remove('success');
+        discountInput.classList.add('error');
+    }
+};
 </script>
 {% endblock script %}
 {% endblock content %}

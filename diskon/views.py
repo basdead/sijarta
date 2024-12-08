@@ -35,11 +35,11 @@ def show_discount_page(request):
         for row in cursor.fetchall():
             vouchers.append({
                 'kode': row[0],
-                'jml_hari_berlaku': row[1],
+                'jmlhariberlaku': row[1],
                 'kuota': row[2],
                 'harga': row[3],
                 'potongan': row[4],
-                'min_transaksi': row[5],
+                'mintrpemesanan': row[5],
                 'description': f"Berlaku {row[1]} hari, min. transaksi Rp {row[5]:,.0f}"
             })
             
@@ -55,9 +55,9 @@ def show_discount_page(request):
         for row in cursor.fetchall():
             promos.append({
                 'kode': row[0],
-                'tgl_berakhir': row[1],
+                'tglakhirberlaku': row[1],
                 'potongan': row[2],
-                'min_transaksi': row[3],
+                'mintrpemesanan': row[3],
                 'description': f"Berlaku sampai {row[1]}, min. transaksi Rp {row[3]:,.0f}"
             })
             
