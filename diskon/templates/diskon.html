@@ -1,0 +1,312 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_format %}
+{% block title %}Diskon{% endblock %}
+{% block content %}
+{% include 'navbar.html' %}
+
+<div class="diskon-content">
+    <div class="navigation">
+        <div class="navigation-buttons">
+            <button onclick="window.location.href='{% url 'main:show_home_page' %}'" class="navigation-button">
+                <div class="home horizontal-stack-info">
+                    <img src="https://www.svgrepo.com/show/500894/home.svg" alt="Home" style="width: 20px; height: 20px;">
+                    <span>Home</span>
+                </div>
+            </button>
+            <div class="path">
+                <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
+            </div>
+            <button class="navigation-button">
+                <div class="diskon horizontal-stack-info" style="color: #667a7b;">
+                    <img src="https://www.svgrepo.com/show/219502/discount.svg" alt="Diskon" style="margin-top: 1px; width: 15px; height: 15px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
+                    <span>Diskon</span>
+                </div>
+            </button>
+        </div>
+    </div>
+    <div class="diskon-container">
+        <div class="diskon-container-content">
+            <div class="diskon-area">
+                <div class="diskon-text">
+                    <h1>Diskon</h1>
+                </div>
+                <div class="diskon-cards" style="width: 100%; display: flex; flex-direction: column; gap: 1.5rem;">
+                    <div class="diskon-card" style="width: 100%; display: flex; flex-direction: column;">
+                        <div class="diskon-card-header" onclick="toggleCategory(this)" style="cursor: pointer;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong>Voucher</strong>
+                                <img src="https://www.svgrepo.com/show/522029/chevron-down.svg" alt="Toggle" class="toggle-icon" style="width: 20px; height: 20px; filter: invert(100%);">
+                            </div>
+                        </div>
+                        <div class="diskon-card-content">
+                            <div class="voucher-grid">
+                                {% for row in voucher_rows %}
+                                <div class="voucher-row">
+                                    {% for voucher in row %}
+                                    <div class="voucher-item">
+                                        <div class="voucher-info">
+                                            <div class="voucher-title">{{ voucher.kode }}</div>
+                                            <div class="voucher-price">{{ voucher.harga|currency_format }}</div>
+                                            <div class="voucher-discount">Potongan: {{ voucher.potongan|currency_format }}</div>
+                                            <div class="voucher-min">Min. Transaksi: {{ voucher.mintrpemesanan|currency_format }}</div>
+                                            <div class="voucher-validity">Berlaku: {{ voucher.jmlhariberlaku }} hari</div>
+                                            <div class="voucher-quota">Kuota Penggunaan: {{ voucher.kuota }} kali</div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% empty %}
+                                <div class="no-items">Tidak ada voucher tersedia saat ini</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="diskon-card" style="width: 100%; display: flex; flex-direction: column;">
+                        <div class="diskon-card-header" onclick="toggleCategory(this)" style="cursor: pointer;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong>Promo</strong>
+                                <img src="https://www.svgrepo.com/show/522029/chevron-down.svg" alt="Toggle" class="toggle-icon" style="width: 20px; height: 20px; filter: invert(100%);">
+                            </div>
+                        </div>
+                        <div class="diskon-card-content">
+                            <div class="promo-grid">
+                                {% for row in promo_rows %}
+                                <div class="promo-row">
+                                    {% for promo in row %}
+                                    <div class="promo-item">
+                                        <div class="promo-info">
+                                            <div class="promo-title">{{ promo.kode }}</div>
+                                            <div class="promo-discount">Potongan: {{ promo.potongan|currency_format }}</div>
+                                            <div class="promo-min">Min. Transaksi: {{ promo.mintrpemesanan|currency_format }}</div>
+                                            <div class="promo-validity">Berlaku sampai: {{ promo.tglakhirberlaku|date:"d M Y" }}</div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% empty %}
+                                <div class="no-items">Tidak ada promo tersedia saat ini</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --placeholder-color: #6c757d;
+        --text-color: #323031;
+    }
+
+    body {
+        padding-top: 70px; /* Adjust this value based on the height of your navbar */
+    }
+
+    button {
+        outline: none;
+    }
+
+    .diskon-content {
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .diskon-container {
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #e9f0f1;
+        border-radius: 0.5rem;
+        width: 100%;  /* Added */
+    }
+
+    .navigation-buttons {
+        display: flex;
+        margin-bottom: 20px;
+    }
+
+    .navigation-button {
+        padding: 0.3rem 0.8rem;
+        border-radius: 2rem;
+        background-color: #e9f0f1;
+        width: fit-content;
+        display: flex;
+        flex-direction: row;
+        border: none;
+    }
+
+    .horizontal-stack-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .diskon-container-content {
+        padding: 20px;
+        width: 100%;  /* Added */
+    }
+
+    .diskon-area {
+        width: 100%;
+        padding: 30px;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: stretch;
+        gap: 2rem;
+    }
+
+    .diskon-text {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .diskon-text h1 {
+        font-weight: bold;
+        font-size: 48px;
+        text-align: center;
+    }
+
+    .diskon-cards {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .diskon-card {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .category-cards {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .diskon-card-header {
+        padding: 10px 20px;
+        margin-bottom: 0;
+        background-color: #177E89;
+        color: white;
+        border-radius: 0.5rem;
+        font-size: 16px;
+        width: 100%;
+        transition: border-radius 0.3s ease;
+    }
+
+    .diskon-card-header.collapsed {
+        border-radius: 0.5rem;
+    }
+
+    .diskon-card-header:not(.collapsed) {
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .diskon-card-content {
+        padding: 20px;
+        margin-bottom: 0;
+        background-color: #cdddde;
+        border-radius: 0 0 0.5rem 0.5rem;
+        font-size: 16px;
+        width: 100%;
+        display: block;
+        transition: all 0.3s ease;
+    }
+
+    .diskon-card-content.hidden {
+        display: none;
+    }
+
+    .toggle-icon {
+        transition: transform 0.3s ease;
+    }
+
+    .collapsed .toggle-icon {
+        transform: rotate(-180deg);
+    }
+
+    .voucher-grid, .promo-grid {
+        width: 100%;
+        gap: 1rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .voucher-row, .promo-row {
+        display: flex;
+        justify-content: flex-start;
+        gap: 1rem;
+    }
+
+    .voucher-item, .promo-item {
+        flex: 1;
+        max-width: calc(33.33% - 0.67rem);
+        display: flex;
+        flex-direction: column;
+        padding: 1rem;
+        background-color: #F5F5F5;
+        border-radius: 0.5rem;
+        transition: transform 0.2s ease;
+    }
+
+    .voucher-item:hover, .promo-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .voucher-info, .promo-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .voucher-title, .promo-title {
+        font-weight: bold;
+        font-size: 1.1rem;
+        color: #177E89;
+    }
+
+    .voucher-price, .voucher-discount, .promo-discount {
+        font-weight: bold;
+        color: #177E89;
+    }
+
+    .voucher-min, .promo-min, .voucher-validity, .promo-validity, .voucher-quota {
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    .no-items {
+        text-align: center;
+        color: #666;
+        padding: 2rem;
+        background-color: #F5F5F5;
+        border-radius: 0.5rem;
+    }
+</style>
+
+<script>
+    function toggleCategory(header) {
+        const content = header.nextElementSibling;
+        header.classList.toggle('collapsed');
+        content.classList.toggle('hidden');
+    }
+</script>
+{% endblock content %}

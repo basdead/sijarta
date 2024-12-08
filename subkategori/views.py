@@ -91,7 +91,17 @@ def show_subcategory(request, subcategory_name):
             WHERE sj.namasubkategori = %s
             ORDER BY sesi
         """, [subcategory_name])
-        sessions = [{'sesi': row[0], 'harga': "{:,.0f}".format(row[1]).replace(",", ".")} for row in cur.fetchall()]
+        
+        raw_sessions = cur.fetchall()
+        logger.info(f"Raw session data: {raw_sessions}")  # Log raw data
+        sessions = []
+        for row in raw_sessions:
+            sesi, harga = row
+            logger.info(f"Processing session - sesi: {sesi}, harga: {harga} (type: {type(harga)})")  # Log each value
+            sessions.append({
+                'sesi': sesi,
+                'harga': float(harga) if harga is not None else 0  # Ensure we have a float
+            })
         
         # Fetch enrolled pekerja for this subcategory
         cur.execute("""

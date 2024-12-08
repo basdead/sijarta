@@ -141,7 +141,7 @@ def edit_profile(request, username):
         profile_user_id = user_result[0]
         
         # Check if the logged-in user is editing their own profile
-        if request.session.get('user_id') != profile_user_id:
+        if str(request.session.get('user_id')) != str(profile_user_id):
             messages.error(request, "You can only edit your own profile")
             return redirect('profil:profile', username=username)
             
@@ -313,3 +313,70 @@ def get_user_profile_data(user_id, user_type, cursor):
         profile_data['foto_url'] = None
     
     return profile_data
+
+def show_discount_page(request):
+    if not request.user.is_authenticated:
+        messages.error(request, 'Please login first')
+        return redirect('main:login')
+    
+    if not request.user.is_customer:
+        messages.error(request, 'Only customers can access this page')
+        return redirect('main:home')
+    
+    # Fetch vouchers with their discount info
+    vouchers = []
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT v.kode, d.potongan, d.mintrpemesanan, v.jmlhariberlaku, v.kuotapenggunaan, v.harga 
+            FROM VOUCHER v 
+            JOIN DISKON d ON v.kode = d.kode
+        """)
+        vouchers = cursor.fetchall()
+    
+    # Fetch promos with their discount info
+    promos = []
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT p.kode, d.potongan, d.mintrpemesanan, p.tglakhirberlaku 
+            FROM PROMO p 
+            JOIN DISKON d ON p.kode = d.kode
+        """)
+        promos = cursor.fetchall()
+    
+    def format_price(value):
+        return "{:,.0f}".format(value).replace(",", ".")
+    
+    # Convert vouchers to list of dictionaries for easier template access
+    voucher_list = []
+    for v in vouchers:
+        voucher_list.append({
+            'kode': v[0],
+            'potongan': format_price(v[1]),
+            'mintrpemesanan': format_price(v[2]),
+            'jmlhariberlaku': v[3],
+            'kuota': v[4],
+            'harga': format_price(v[5])
+        })
+    
+    # Convert promos to list of dictionaries
+    promo_list = []
+    for p in promos:
+        promo_list.append({
+            'kode': p[0],
+            'potongan': format_price(p[1]),
+            'mintrpemesanan': format_price(p[2]),
+            'tglakhirberlaku': p[3]
+        })
+    
+    # Organize vouchers into rows of 3
+    voucher_rows = [voucher_list[i:i+3] for i in range(0, len(voucher_list), 3)]
+    
+    # Organize promos into rows of 3
+    promo_rows = [promo_list[i:i+3] for i in range(0, len(promo_list), 3)]
+    
+    context = {
+        'voucher_rows': voucher_rows,
+        'promo_rows': promo_rows,
+    }
+    
+    return render(request, 'diskon.html', context)

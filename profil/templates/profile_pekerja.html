@@ -15,7 +15,7 @@
             <div class="path">
                 <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
             </div>
-            <button onclick="window.location.href='{% url 'profil:profile' %}'" class="navigation-button">
+            <button onclick="window.location.href='{% url 'profil:profile' request.session.user_name|cut:' ' %}'" class="navigation-button">
                 <div class="home horizontal-stack-info">
                     <img src="https://www.svgrepo.com/show/483464/person.svg" alt="Profile" style="width: 15px; height: 15px;">
                     <span>Profile</span>
@@ -24,7 +24,7 @@
             <div class="path">
                 <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
             </div>
-            <button onclick="window.location.href='{% url 'profil:edit_profile' %}'" class="navigation-button">
+            <button onclick="window.location.href='{% url 'profil:edit_profile' request.session.user_name|cut:' ' %}'" class="navigation-button">
                 <div class="home horizontal-stack-info" style="color: #667a7b;">
                     <img src="https://www.svgrepo.com/show/535558/pencil.svg" alt="Edit Profile" style="width: 15px; height: 15px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
                     <span>Edit Profile</span>
@@ -40,7 +40,7 @@
                     <div class="edit-text">
                         <h1>Edit Profile</h1>
                     </div>
-                    <form id="profile-form" method="post" action="{% url 'profil:edit_profile' %}">
+                    <form id="profile-form" method="post" action="{% url 'profil:edit_profile' request.session.user_name|cut:' ' %}">
                         {% csrf_token %}
                         <div class="row-one">
                             <div class="form-group mb-3 other-group">
@@ -446,7 +446,7 @@
                 console.log(pair[0] + ': ' + pair[1]);
             }
             
-            fetch('{% url "profil:edit_profile" %}', {
+            fetch('{% url "profil:edit_profile" request.session.user_name|cut:" " %}', {
                 method: 'POST',
                 body: formData,
                 credentials: 'same-origin'  // This is important for CSRF
@@ -460,7 +460,7 @@
                 return response;
             })
             .then(response => {
-                window.location.href = '{% url "profil:profile" %}';
+                window.location.href = '{% url "profil:profile" request.session.user_name|cut:" " %}';
             })
             .catch(error => {
                 console.error('Error:', error);

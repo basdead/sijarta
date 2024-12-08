@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% load humanize %}
+{% load currency_format %}
 {% block title %}{{ subcategory.nama_subkategori }}{% endblock %}
 {% block content %}
 {% include 'navbar.html' %}
@@ -142,7 +143,7 @@
                             <div class="session-item">
                                 <div class="session-info">
                                     <div class="session-number">{{ session.sesi }} Jam</div>
-                                    <div class="session-price">Rp {{ session.harga }}</div>
+                                    <div class="session-price">{{ session.harga|currency_format }}</div>
                                 </div>
                                 {% if request.session.is_authenticated and request.session.user_type == 'pelanggan' %}
                                 <div class = "p_buttons">

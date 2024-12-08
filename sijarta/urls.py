@@ -23,4 +23,5 @@ urlpatterns = [
     path('profile/', include('profil.urls')),
     path('subcategory/', include('subkategori.urls')),
     path('orders/', include('pemesanan_jasa.urls')),
+    path('discount/', include('diskon.urls')),
 ]
