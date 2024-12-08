@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'pemesanan_jasa',
     'diskon',
     'mypay',
-    'templatetags',
+    'utils',
 ]
 
 MIDDLEWARE = [
