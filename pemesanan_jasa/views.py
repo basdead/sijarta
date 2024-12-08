@@ -87,8 +87,7 @@ def order_jasa(request, subcategory_name):
         sessions = [
             {
                 'sesi': row[0], 
-                'harga': row[1],  # Raw price for calculations
-                'harga_display': "{:,.0f}".format(row[1]).replace(",", ".")  # Formatted price for display
+                'harga': float(row[1]) if row[1] is not None else 0  # Raw price as float
             }
             for row in cursor.fetchall()
         ]
@@ -307,7 +306,7 @@ def show_my_orders(request):
                 'tanggal_pemesanan': row[1],
                 'tanggal_pekerjaan': row[2],
                 'waktu_pekerjaan': row[3],
-                'harga': "{:,.0f}".format(row[4]).replace(",", "."),  # Format price with Indonesian style
+                'harga': row[4],  # Pass raw number
                 'sesi_layanan': row[5],
                 'subkategori_jasa': {'nama': row[6], 'id': row[7]},
                 'pekerja': {'nama': row[8]},

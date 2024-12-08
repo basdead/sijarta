@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load humanize %}
+{% load currency_format %}
 {% block title %}Pesanan Saya{% endblock %}
 {% block content %}
 {% include 'navbar.html' %}
@@ -81,7 +82,7 @@
                                 <div class="order-details">
                                     <div class="detail-cell">{{ order.subkategori_jasa.nama }}</div>
                                     <div class="detail-cell">{{ order.sesi_layanan }}</div>
-                                    <div class="detail-cell">Rp {{ order.harga }}</div>
+                                    <div class="detail-cell">{{ order.harga|currency_format }}</div>
                                     <div class="detail-cell">{{ order.pekerja.nama }}</div>
                                     <div class="detail-cell">{{ order.status }}</div>
                                     <div class="detail-cell button-row">

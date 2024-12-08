@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load humanize %}
+{% load currency_format %}
 {% block title %}Pesan Jasa {{ subcategory.nama_subkategori }}{% endblock %}
 {% block content %}
 {% include 'navbar.html' %}
@@ -90,7 +91,7 @@
                                     <option value="{{ session.sesi }}" 
                                             data-price="{{ session.harga }}" 
                                             {% if selected_session and session.sesi == selected_session %}selected{% endif %}>
-                                        {{ session.sesi }} Jam - Rp {{ session.harga_display }}
+                                        {{ session.sesi }} Jam - {{ session.harga|currency_format }}
                                     </option>
                                 {% endfor %}
                             </select>
@@ -310,7 +311,12 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentPrice = 0;
 
     function formatPrice(price) {
-        return new Intl.NumberFormat('id-ID').format(price);
+        // Format with Indonesian number format (using . as thousand separator)
+        return new Intl.NumberFormat('id-ID', { 
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+            style: 'decimal'
+        }).format(price).replace(',', '.');
     }
 
     function updateTotal() {
