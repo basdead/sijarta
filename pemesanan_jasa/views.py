@@ -109,9 +109,45 @@ def order_jasa(request, subcategory_name):
         if request.method == 'POST':
             tgl_pemesanan = request.POST.get('tgl_pemesanan')
             sesi = request.POST.get('sesi')
-            kode_diskon = request.POST.get('kode_diskon')
+            kode_diskon = request.POST.get('kode_diskon', '').strip()
             metode_bayar = request.POST.get('metode_bayar')
             total_pembayaran = request.POST.get('total_pembayaran')  # Get the actual total after discount
+            has_discount = request.POST.get('has_discount') == 'true'
+            
+            # Only try to validate discount if a code was provided and has_discount is true
+            if kode_diskon and has_discount:
+                # First check if it's a PROMO
+                cursor.execute('''
+                    SELECT 1
+                    FROM PROMO
+                    WHERE Kode = %s
+                ''', (kode_diskon,))
+                
+                is_promo = cursor.fetchone() is not None
+
+                if not is_promo:
+                    # Not a PROMO, check if it's a VOUCHER
+                    cursor.execute('''
+                        SELECT 1
+                        FROM VOUCHER v
+                        JOIN TR_PEMBELIAN_VOUCHER tr ON v.Kode = tr.IdVoucher
+                        WHERE v.Kode = %s AND tr.IdPelanggan = %s
+                    ''', (kode_diskon, user_id))
+                    
+                    if not cursor.fetchone():
+                        messages.error(request, 'Invalid voucher or voucher not purchased by this user')
+                        return render(request, 'order_form.html', {
+                            'subcategory': {
+                                'id': subcategory_data[0],
+                                'nama_subkategori': subcategory_data[1],
+                                'deskripsi': subcategory_data[2]
+                            },
+                            'category': {'nama_kategori': subcategory_data[3]},
+                            'sessions': sessions,
+                            'selected_session': selected_session,
+                            'payment_methods': [{'id': row[0], 'nama': row[1]} for row in cursor.fetchall()],
+                            'current_date': get_user_date(request)
+                        })
 
             # Get status based on payment method
             cursor.execute('SELECT nama FROM METODE_BAYAR WHERE id = %s', (metode_bayar,))
@@ -132,51 +168,16 @@ def order_jasa(request, subcategory_name):
 
             # If discount code is provided, validate it
             if kode_diskon:
-                # First check if it exists in DISKON table
+                # First check if it's a PROMO
                 cursor.execute('''
-                    SELECT 1 FROM DISKON WHERE Kode = %s
-                ''', (kode_diskon,))
-                
-                if not cursor.fetchone():
-                    messages.error(request, 'Invalid discount code')
-                    return render(request, 'order_form.html', {
-                        'subcategory': {
-                            'id': subcategory_data[0],
-                            'nama_subkategori': subcategory_data[1],
-                            'deskripsi': subcategory_data[2]
-                        },
-                        'category': {'nama_kategori': subcategory_data[3]},
-                        'sessions': sessions,
-                        'selected_session': selected_session,
-                        'payment_methods': [{'id': row[0], 'nama': row[1]} for row in cursor.fetchall()],
-                        'current_date': get_user_date(request)
-                    })
-
-                # Then check if it's a PROMO
-                cursor.execute('''
-                    SELECT TglAkhirBerlaku
+                    SELECT 1
                     FROM PROMO
                     WHERE Kode = %s
                 ''', (kode_diskon,))
                 
-                promo = cursor.fetchone()
-                if promo:
-                    # It's a PROMO, check if it's expired
-                    if promo[0] < datetime.now().date():
-                        messages.error(request, 'This promo has expired')
-                        return render(request, 'order_form.html', {
-                            'subcategory': {
-                                'id': subcategory_data[0],
-                                'nama_subkategori': subcategory_data[1],
-                                'deskripsi': subcategory_data[2]
-                            },
-                            'category': {'nama_kategori': subcategory_data[3]},
-                            'sessions': sessions,
-                            'selected_session': selected_session,
-                            'payment_methods': [{'id': row[0], 'nama': row[1]} for row in cursor.fetchall()],
-                            'current_date': get_user_date(request)
-                        })
-                else:
+                is_promo = cursor.fetchone() is not None
+
+                if not is_promo:
                     # Not a PROMO, check if it's a VOUCHER
                     cursor.execute('''
                         SELECT 1
@@ -201,29 +202,75 @@ def order_jasa(request, subcategory_name):
                         })
 
             # Insert new order with the actual total_pembayaran
-            cursor.execute('''
-                INSERT INTO TR_PEMESANAN_JASA (
-                    TglPemesanan, TglPekerjaan, WaktuPekerjaan,
-                    TotalBiaya, IdPelanggan, IdKategoriJasa,
-                    Sesi, IdDiskon, IdMetodeBayar
-                ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s
-                ) RETURNING Id
-            ''', (
-                tgl_pemesanan,
-                tgl_pemesanan,  # TglPekerjaan same as TglPemesanan for now
-                datetime.now(),  # WaktuPekerjaan as current timestamp
-                total_pembayaran,  # Use the actual total after discount
-                user_id,
-                subcategory_data[0],  # SubkategoriId
-                sesi,
-                kode_diskon if (kode_diskon and not is_promo) else None,  # Set IdDiskon to NULL if no code or if it's a PROMO
-                metode_bayar
-            ))
+            if is_promo:
+                logger.info(f"Processing promo code: {kode_diskon}")
+                # For promos, we bypass the trigger by setting IdDiskon to NULL temporarily
+                cursor.execute('''
+                    INSERT INTO TR_PEMESANAN_JASA (
+                        TglPemesanan, TglPekerjaan, WaktuPekerjaan,
+                        TotalBiaya, IdPelanggan, IdKategoriJasa,
+                        Sesi, IdDiskon, IdMetodeBayar
+                    ) VALUES (
+                        %s, %s, %s, %s, %s, %s, %s, NULL, %s
+                    ) RETURNING Id;
+                ''', (
+                    tgl_pemesanan,
+                    tgl_pemesanan,  # TglPekerjaan same as TglPemesanan for now
+                    datetime.now(),  # WaktuPekerjaan as current timestamp
+                    total_pembayaran,  # Use the actual total after discount
+                    user_id,
+                    subcategory_data[0],  # SubkategoriId
+                    sesi,
+                    metode_bayar
+                ))
+                
+                # Get the ID of the inserted order
+                result = cursor.fetchone()
+                if result is None:
+                    logger.error("Failed to insert initial order with NULL IdDiskon")
+                    raise Exception("Failed to create order")
+                new_order_id = result[0]
+                
+                logger.info(f"Order created with ID: {new_order_id}, updating with promo code")
+                
+                # Now update with the promo code
+                cursor.execute('''
+                    UPDATE TR_PEMESANAN_JASA 
+                    SET IdDiskon = %s 
+                    WHERE Id = %s
+                ''', (kode_diskon, new_order_id))
+                
+            else:
+                logger.info(f"Processing voucher code: {kode_diskon}")
+                # For vouchers, let the trigger handle validation
+                cursor.execute('''
+                    INSERT INTO TR_PEMESANAN_JASA (
+                        TglPemesanan, TglPekerjaan, WaktuPekerjaan,
+                        TotalBiaya, IdPelanggan, IdKategoriJasa,
+                        Sesi, IdDiskon, IdMetodeBayar
+                    ) VALUES (
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s
+                    ) RETURNING Id
+                ''', (
+                    tgl_pemesanan,
+                    tgl_pemesanan,  # TglPekerjaan same as TglPemesanan for now
+                    datetime.now(),  # WaktuPekerjaan as current timestamp
+                    total_pembayaran,  # Use the actual total after discount
+                    user_id,
+                    subcategory_data[0],  # SubkategoriId
+                    sesi,
+                    kode_diskon,  # Let trigger validate voucher
+                    metode_bayar
+                ))
+                
+                result = cursor.fetchone()
+                if result is None:
+                    logger.error("Failed to insert order with voucher code")
+                    raise Exception("Failed to create order")
+                new_order_id = result[0]
+                
+            logger.info(f"Successfully created order with ID: {new_order_id}")
             
-            # Get the newly created order ID
-            new_order_id = cursor.fetchone()[0]
-
             # Get status ID based on payment method
             if payment_method and payment_method[0] == 'MyPay':
                 status_name = 'Menunggu Pembayaran'
@@ -432,9 +479,17 @@ def show_my_orders(request):
 
         # Get user's orders with all required information
         cursor.execute('''
+            WITH LatestStatus AS (
+                SELECT 
+                    IdTrPemesanan,
+                    IdStatus,
+                    TglWaktu,
+                    ROW_NUMBER() OVER (PARTITION BY IdTrPemesanan ORDER BY TglWaktu DESC) as rn
+                FROM TR_PEMESANAN_STATUS
+            )
             SELECT 
                 p.id, 
-                p.tglpemesanan, 
+                p.tglpemesanan AT TIME ZONE 'Asia/Jakarta' as tglpemesanan, 
                 p.tglpekerjaan, 
                 p.waktupekerjaan, 
                 p.totalbiaya, 
@@ -446,13 +501,13 @@ def show_my_orders(request):
                 sl.harga as original_harga
             FROM TR_PEMESANAN_JASA p
             JOIN SUBKATEGORI_JASA sk ON p.idkategorijasa = sk.id
-            LEFT JOIN TR_PEMESANAN_STATUS ps ON p.id = ps.idtrpemesanan
-            LEFT JOIN STATUS_PEMESANAN s ON ps.idstatus = s.id
+            LEFT JOIN LatestStatus ps ON p.id = ps.IdTrPemesanan AND ps.rn = 1
+            LEFT JOIN STATUS_PEMESANAN s ON ps.IdStatus = s.id
             LEFT JOIN PEKERJA w ON p.idpekerja = w.id
             LEFT JOIN "USER" u ON w.id = u.id
             LEFT JOIN SESI_LAYANAN sl ON (sk.id = sl.subkategoriid AND p.sesi = sl.sesi)
             WHERE p.idpelanggan = %s
-            ORDER BY p.tglpemesanan ASC
+            ORDER BY p.tglpemesanan AT TIME ZONE 'Asia/Jakarta' DESC
         ''', (user_id,))
         
         orders = []
