@@ -52,7 +52,7 @@
                                             <div class="voucher-quota">Kuota Penggunaan: {{ voucher.kuota }} kali</div>
                                         </div>
                                         <div class = "p_buttons">
-                                            <button class="buy-voucher" onclick="">Beli Voucher</button>
+                                            <a href="{% url 'diskon:voucher_purchase' voucher_code=voucher.kode %}" class="buy-voucher">Beli Voucher</a>
                                         </div>
                                     </div>
                                     {% endfor %}
@@ -309,6 +309,7 @@
         border: none;
         cursor: pointer;
         font-size: 0.9rem;
+        text-decoration: none;
     }
 
     .buy-voucher:hover {
@@ -323,4 +324,14 @@
         content.classList.toggle('hidden');
     }
 </script>
+
+{% block script %}
+<script>
+    {% if messages %}
+        {% for message in messages %}
+            alert("{{ message }}");
+        {% endfor %}
+    {% endif %}
+</script>
+{% endblock script %}
 {% endblock content %}
