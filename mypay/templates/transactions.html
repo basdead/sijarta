@@ -1,0 +1,543 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load currency_format %}
+{% load humanize %}
+{% block title %}Transaksi MyPay{% endblock %}
+{% block content %}
+{% include 'navbar.html' %}
+
+<div class="transaction-content">
+    <div class="navigation">
+        <div class="navigation-buttons">
+            <button onclick="window.location.href='{% url 'main:show_home_page' %}'" class="navigation-button">
+                <div class="home horizontal-stack-info">
+                    <img src="https://www.svgrepo.com/show/500894/home.svg" alt="Home" style="width: 20px; height: 20px;">
+                    <span>Home</span>
+                </div>
+            </button>
+            <div class="path">
+                <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
+            </div>
+            <button onclick="window.location.href='{% url 'mypay:show_mypay' %}'" class="navigation-button">
+                <div class="mypay horizontal-stack-info">
+                    <img src="https://www.svgrepo.com/show/522339/wallet.svg" alt="MyPay" style="width: 15px; height: 15px;">
+                    <span>MyPay</span>
+                </div>
+            </button>
+            <div class="path">
+                <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
+            </div>
+            <button class="navigation-button">
+                <div class="mypay horizontal-stack-info" style="color: #667a7b;">
+                    <img src="https://www.svgrepo.com/show/522339/wallet.svg" alt="MyPay" style="width: 15px; height: 15px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
+                    <span>Transaksi MyPay</span>
+                </div>
+            </button>
+        </div>
+    </div>
+    <div class="transaction-container">
+        <div class="transaction-container-content">
+            <div class="transaction-area">
+                <div class="transaction-area-top">
+                    <div class="filters">
+                        <div class="tanggal-area">
+                            <div class="label">Tanggal Transaksi</div>
+                            <div class="value">{{ current_date }}</div>
+                        </div>
+                        <div class="nama-user-area">
+                            <div class="label">Nama</div>
+                            <div class="value">{{ user_name }}</div>
+                        </div>
+                        <div class="saldo-area">
+                            <div class="label">Saldo MyPay</div>
+                            <div class="value">{{ user_balance|currency_format }}</div>
+                        </div>
+                    </div>
+                    <div class="filters">
+                        <div class="dropdown" style="width: 100%;">
+                            <select name="kategori-transaksi"
+                                id="kategori-transaksi-dropdown"
+                                class="dropdown-content horizontal-stack-info" 
+                                style="width: 100%; display: flex; justify-content: center; align-items: center; border-radius: 2rem; background-color: #cdddde; outline: none; box-shadow: none; appearance: none; padding: 0px 5px 0px 5px; background-image: url('https://www.svgrepo.com/show/522029/chevron-down.svg'); background-repeat: no-repeat; background-position: right 10px center; background-size: 20px;">
+                                <option value="">Kategori Transaksi</option>
+                                {% if categories %}
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}" {% if category.disabled %}disabled{% endif %}>
+                                        {{ category.nama }}{% if category.disabled %} (Tidak Tersedia){% endif %}
+                                    </option>
+                                    {% endfor %}
+                                {% else %}
+                                    <option value="" disabled>Tidak ada kategori tersedia</option>
+                                {% endif %}
+                            </select>
+                            <!-- Debug info (temporary) -->
+                            <div style="display: none;">
+                                <p>User Type: {{ user_type }}</p>
+                                <p>Categories: {{ categories|json_script:"debug-categories" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="transaction-forms-area">
+                    <div class="transaction-forms-content" id="forms-container">
+                        <div id="topup-form" style="display: none;">
+                            <form method="post" action="{% url 'mypay:update_transaction_form' %}" class="transaction-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="form_type" value="topup">
+                                <div class="form-group mb-3">
+                                    <label for="nominal">Nominal Top Up MyPay</label>
+                                    <input type="text" 
+                                           name="nominal"
+                                           id="nominal-topup"
+                                           class="w-100"
+                                           value="Rp 0"
+                                           placeholder="Nominal Top Up MyPay"
+                                           oninput="formatNominal(this)"
+                                           required>
+                                </div>
+                                <div class="button-row">
+                                    <button type="submit" class="topup-mypay-button">Top Up</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div id="payment-form" style="display: none;">
+                            <form method="post" action="{% url 'mypay:update_transaction_form' %}" class="transaction-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="form_type" value="bayar_jasa">
+                                <div class="form-group mb-3">
+                                    <label for="service_id">Pilih Pesanan Jasa</label>
+                                    <select name="service_id" 
+                                           id="service_id"
+                                           class="w-100"
+                                           onchange="updateTotalBayar(this);"
+                                           required>
+                                        <option value="">Pilih pesanan yang akan dibayar</option>
+                                        {% for order in pending_orders %}
+                                            <option value="{{ order.id }}" data-harga="{{ order.totalharga }}">
+                                                {{ order.subkategori }} - {{ order.sesi }} ({{ order.totalharga|currency_format }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label for="nominal">Total Harga</label>
+                                    <input type="text" 
+                                        name="nominal_value"
+                                        id="nominal_value"
+                                        class="w-100"
+                                        placeholder="Total Harga"
+                                        readonly
+                                        required>
+                                </div>
+                                <div class="button-row">
+                                    <button type="submit" class="payment-mypay-button">Bayar</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div id="transfer-form" style="display: none;">
+                            <form method="post" action="{% url 'mypay:update_transaction_form' %}" class="transaction-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="form_type" value="transfer">
+                                <div class="form-group mb-3">
+                                    <label for="nomor-hp">Nomor HP</label>
+                                    <input type="text" 
+                                           name="nomor-hp"
+                                           id="nomor-hp"
+                                           class="w-100"
+                                           placeholder="Nomor HP"
+                                           required>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label for="nominal">Nominal Transfer</label>
+                                    <input type="text" 
+                                           name="nominal"
+                                           id="nominal-transfer"
+                                           class="w-100"
+                                           value="Rp 0"
+                                           placeholder="Nominal Transfer"
+                                           oninput="formatNominal(this)"
+                                           required>
+                                </div>
+                                <div class="button-row">
+                                    <button type="submit" class="transfer-mypay-button">Transfer</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div id="withdraw-form" style="display: none;">
+                            <form method="post" action="{% url 'mypay:update_transaction_form' %}" class="transaction-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="form_type" value="withdraw">
+                                <div class="form-group mb-3">
+                                    <label for="metode_bayar">Nama Bank</label>
+                                    <select name="metode_bayar" 
+                                           id="metode_bayar" 
+                                           class="w-100"
+                                           required>
+                                        <option value="">Pilih Bank</option>
+                                        {% for method in payment_methods %}
+                                            <option value="{{ method.id }}">{{ method.nama }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label for="nominal">Nomor Rekening</label>
+                                    <input type="text" 
+                                           name="account-number"
+                                           id="account-number"
+                                           class="w-100"
+                                           placeholder="Nomor Rekening"
+                                           required>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label for="nominal">Nominal Penarikan Saldo</label>
+                                    <input type="text" 
+                                           name="nominal"
+                                           id="nominal-withdraw"
+                                           class="w-100"
+                                           value="Rp 0"
+                                           placeholder="Nominal Penarikan Saldo"
+                                           oninput="formatNominal(this)"
+                                           required>
+                                </div>
+                                <div class="button-row">
+                                    <button type="submit" class="withdrawal-mypay-button">Tarik Saldo</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div id="default-message" class="text-center">
+                            Pilih kategori transaksi MyPay
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+        :root {
+        --placeholder-color: #6c757d;
+        --text-color: #323031;
+    }
+
+    body {
+        padding-top: 70px; /* Adjust this value based on the height of your navbar */
+    }
+
+    button {
+        outline: none;
+    }
+
+    .transaction-content {
+        padding: 20px;
+        margin-top: 20px;
+    }
+
+    .transaction-container {
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #e9f0f1;
+        border-radius: 0.5rem;
+        width: 100%;  
+    }
+
+    .navigation-buttons {
+        display: flex;
+        margin-bottom: 20px;
+    }
+
+    .navigation-button {
+        padding: 0.3rem 0.8rem;
+        border-radius: 2rem;
+        background-color: #e9f0f1;
+        width: fit-content;
+        display: flex;
+        flex-direction: row;
+        border: none;
+    }
+
+    .horizontal-stack-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .transaction-container-content {
+        padding: 20px;
+        width: 100%;  
+    }
+
+    .transaction-area {
+        width: 100%;
+        padding: 30px;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: stretch;
+        gap: 1.5rem;
+    }
+
+    .transaction-area-top {
+        gap: 1.5rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filters {
+        display: flex;
+        flex-direction: row;
+        gap: 1rem;
+        width: 100%;
+    }
+
+    .dropdown {
+        width: 100%;
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        display: flex;
+        flex-direction: row;
+        background-color: #cdddde;
+    }
+
+    .dropdown-content {
+        display: flex;
+        align-items: center;
+        position: relative;
+    }
+
+    select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background: none;
+        padding-right: 18px; /* Space for custom chevron */
+        border: none;
+    }
+
+    select:focus {
+        outline: none;
+        box-shadow: none;
+    }
+
+    .nama-user-area, .saldo-area, .tanggal-area {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 20px;
+        background-color: #cdddde;
+        border-radius: 0.5rem;
+        width: 100%;
+    }
+
+    .label {
+        font-weight: bold;
+        color: #177E89;
+    }
+
+    .value {
+        font-weight: bold;
+    }
+
+    .transaction-forms-area {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: #cdddde;
+        border-radius: 0.5rem;
+        width: 100%;  
+    }
+
+    .transaction-forms-content {
+        padding: 40px 80px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: stretch;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        width: 100%;  
+    }
+
+    .transaction-form {
+        width: 100%;
+    }
+
+    .form-group {
+        width: 100%;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 0.6rem 1.2rem;  /* Increased from 0.3rem 0.8rem */
+        border-radius: 2rem;
+        background-color: #e9f0f1;
+        border: none;
+        outline: none;
+    }
+
+    /* Optional: Add hover/focus states to match navigation-button if needed */
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        background-color: #dde5e6;
+    }
+
+    /* If you want to style the select dropdown arrow */
+    .form-group select {
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.8rem center;
+        background-size: 1em;
+    }
+
+    .form-group label {
+        margin-bottom: 0;
+        display: inline-block;
+        font-weight: bold;  
+    }
+
+    .w-100 {
+        margin-top: 0.5rem; /* Standard spacing between label and input */
+    }
+
+    .button-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 2rem;
+    }
+
+    /* CSS styles */
+    .topup-mypay-button, .payment-mypay-button, .withdrawal-mypay-button, .transfer-mypay-button {
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        background-color: #177E89;
+        color: white;
+        width: fit-content;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .topup-mypay-button:hover, .payment-mypay-button:hover, .withdrawal-mypay-button:hover, .transfer-mypay-button:hover {
+        background-color: #084c61;
+    }
+
+    .default-message {
+        text-align: center;
+        font-size: 1.2rem;
+        color: #667a7b;
+        padding: 2rem;
+    }
+</style>
+
+<script>
+    function updateTotalBayar(selectElement) {
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        const nominalInput = document.getElementById('nominal');
+        const nominalValue = document.getElementById('nominal_value');
+        
+        if (selectedOption && selectedOption.value) {
+            const harga = selectedOption.getAttribute('data-harga');
+            
+            // Format the price to match currency_format filter (Rp XX.XXX)
+            const numericHarga = parseInt(harga);
+            const formattedHarga = 'Rp ' + numericHarga.toLocaleString('id-ID');
+            
+            nominalValue.value = formattedHarga;
+            nominalInput.value = formattedHarga;
+            
+            // Remove the placeholder when we have a value
+            nominalInput.removeAttribute('placeholder');
+        } else {
+            nominalInput.value = '';
+            nominalValue.value = '';
+            // Restore placeholder when no value is selected
+            nominalInput.setAttribute('placeholder', 'Total Harga');
+        }
+    }
+
+    function formatNominal(input) {
+        // Remove non-numeric characters and convert to number
+        let value = input.value.replace(/[^\d]/g, '');
+        
+        // If empty or invalid, set to 0
+        if (!value) {
+            input.value = 'Rp 0';
+            return;
+        }
+        
+        // Convert to number and format with thousand separator
+        const numValue = parseInt(value);
+        const formattedValue = new Intl.NumberFormat('id-ID').format(numValue);
+        
+        // Set the formatted value with 'Rp ' prefix
+        input.value = 'Rp ' + formattedValue;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const dropdown = document.getElementById('kategori-transaksi-dropdown');
+        const topupForm = document.getElementById('topup-form');
+        const paymentForm = document.getElementById('payment-form');
+        const transferForm = document.getElementById('transfer-form');
+        const withdrawForm = document.getElementById('withdraw-form');
+        const defaultMessage = document.getElementById('default-message');
+        const formsContent = document.getElementById('forms-container');
+
+        function hideAllForms() {
+            topupForm.style.display = 'none';
+            paymentForm.style.display = 'none';
+            transferForm.style.display = 'none';
+            withdrawForm.style.display = 'none';
+            defaultMessage.style.display = 'block';
+        }
+
+        dropdown.addEventListener('change', function() {
+            const selectedValue = this.value;
+            hideAllForms();
+            
+            if (selectedValue === 'topup') {
+                topupForm.style.display = 'block';
+                defaultMessage.style.display = 'none';
+                formsContent.style.padding = '40px 400px';
+            } else if (selectedValue === 'bayar_jasa') {
+                paymentForm.style.display = 'block';
+                defaultMessage.style.display = 'none';
+                formsContent.style.padding = '40px 400px';
+            } else if (selectedValue === 'transfer') {
+                transferForm.style.display = 'block';
+                defaultMessage.style.display = 'none';
+                formsContent.style.padding = '40px 400px';
+            } else if (selectedValue === 'withdrawal') {
+                withdrawForm.style.display = 'block';
+                defaultMessage.style.display = 'none';
+                formsContent.style.padding = '40px 400px';
+            }
+        });
+
+        const nominalInputs = [
+            document.getElementById('nominal-topup'),
+            document.getElementById('nominal-transfer'),
+            document.getElementById('nominal-withdraw')
+        ];
+        
+        nominalInputs.forEach(input => {
+            if (input) {
+                input.value = 'Rp 0';
+            }
+        });
+    });
+</script>
+
+{% endblock content %}

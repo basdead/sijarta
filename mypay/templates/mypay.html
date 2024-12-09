@@ -31,7 +31,7 @@
                 <div class="mypay-infos-item">
                     <div class="non-buttons">
                         <div class="nomor-handphone-area">
-                            <div class="label">No. HP</div>
+                            <div class="label">Nomor HP</div>
                             <div class="value">{{ phone_number }}</div>
                         </div>
                         <div class="saldo-area">
@@ -40,7 +40,7 @@
                         </div>
                     </div>
                     <div class = "p_buttons">
-                        <button class="transaction-button" onclick="">Lakukan Transaksi MyPay</button>
+                        <button class="transaction-button" onclick="window.location.href='transactions/'">Lakukan Transaksi MyPay</button>
                     </div>
                 </div>
                 <div class="mypay-table">
@@ -53,7 +53,7 @@
                     </div>
                     {% if transactions %}
                     <div class="mypay-table-content">
-                        {% for transaction in transactions %}
+                        {% for transaction in transactions reversed %}
                         <div class="mypay-table-item">
                             <div class="mypay-table-details">
                                 <div class="detail-cell">{{ transaction.nominal|currency_format }}</div>
@@ -269,16 +269,26 @@
     }
 
     .mypay-table-item {
-        padding: 15px;
+        background-color: #f8f9fa;
+        padding: 25px;
         transition: background-color 0.2s ease;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
 
+    .mypay-table-content .mypay-table-item:first-child {
+        border-top-left-radius: 0.5rem;
+        border-top-right-radius: 0.5rem;
+    }
+
+    .mypay-table-content .mypay-table-item:last-child {
+        border-bottom-left-radius: 0.5rem;
+        border-bottom-right-radius: 0.5rem;
+    }
+
     .mypay-table-item:hover {
         background-color: #e9ecef;
-        border-radius: 0.3rem;
     }
 
     .mypay-table-details {
