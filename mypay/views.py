@@ -49,11 +49,22 @@ def show_mypay(request):
         user_data = cursor.fetchone()
         
         if not user_data:
-            logger.error(f'User data not found for user_id: {user_id}')
+            logger.error(f'User with id {user_id} not found in database')
             messages.error(request, 'Data pengguna tidak ditemukan')
             return redirect('main:show_home_page')
-            
-        logger.info(f'User data found: id={user_data[0]}, phone={user_data[1]}, balance={user_data[2]}')
+
+        # Get worker's photo URL if user is a worker
+        navbar_attributes = {}
+        if request.session.get('user_type') == 'pekerja':
+            cursor.execute('''
+                SELECT p.LinkFoto
+                FROM PEKERJA p
+                JOIN "USER" u ON p.id = u.id
+                WHERE u.id = %s
+            ''', [user_id])
+            worker_data = cursor.fetchone()
+            if worker_data:
+                navbar_attributes['foto_url'] = worker_data[0]
         
         # First check if there are any transactions at all
         cursor.execute('SELECT COUNT(*) FROM TR_MYPAY WHERE userid = %s', [user_id])
@@ -98,9 +109,13 @@ def show_mypay(request):
             logger.info(f'First transaction: {transactions[0]}')
         
         context = {
-            'phone_number': user_data[1],
-            'mypay_balance': user_data[2],
-            'transactions': transactions
+            'user_data': {
+                'phone': user_data[1],
+                'balance': float(user_data[2]) if user_data[2] is not None else 0
+            },
+            'navbar_attributes': navbar_attributes,
+            'transactions': transactions,
+            'current_date': get_user_date(request)
         }
         
         logger.info(f'Final context: {context}')

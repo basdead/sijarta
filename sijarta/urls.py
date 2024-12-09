@@ -25,4 +25,5 @@ urlpatterns = [
     path('orders/', include('pemesanan_jasa.urls')),
     path('discount/', include('diskon.urls')),
     path('mypay/', include('mypay.urls')),
+    path('work/', include('pekerjaan_jasa.urls')),
 ]

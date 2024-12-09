@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'pemesanan_jasa',
     'diskon',
     'mypay',
+    'pekerjaan_jasa',
     'utils',
 ]
 

@@ -17,8 +17,8 @@
                     <a href="{% url 'pemesanan_jasa:show_my_orders' %}" class="nav-item nav-link">Kelola Pesanan Saya</a>
                     <a href="{% url 'diskon:show_discount_page' %}" class="nav-item nav-link">Diskon</a>
                 {% elif request.session.user_type == 'pekerja' %}
-                    <a href="" class="nav-item nav-link">Kelola Pekerjaan Saya</a>
-                    <a href="" class="nav-item nav-link">Kelola Status Pekerjaan</a>
+                    <a href="{% url 'pekerjaan_jasa:show_my_works' %}" class="nav-item nav-link">Kelola Pekerjaan Saya</a>
+                    <a href="{% url 'pekerjaan_jasa:show_work_status' %}" class="nav-item nav-link">Kelola Status Pekerjaan</a>
                     <a href="{% url 'mypay:show_mypay' %}" class="nav-item nav-link">MyPay</a>
                 {% endif %}
             {% endif %}
