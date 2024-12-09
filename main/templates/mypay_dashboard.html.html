@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="home-content">
+    <h1>MyPay Dashboard</h1>
+    <div class="balance">
+        <h2>Saldo: Rp {{ mypay.balance }}</h2>
+    </div>
+    <h3>Riwayat Transaksi</h3>
+    <table border="1" class="transactions-table">
+        <tr>
+            <th>Tanggal</th>
+            <th>Jenis</th>
+            <th>Jumlah</th>
+        </tr>
+        {% for transaction in transactions %}
+        <tr>
+            <td>{{ transaction.timestamp }}</td>
+            <td>{{ transaction.transaction_type }}</td>
+            <td>Rp {{ transaction.amount }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

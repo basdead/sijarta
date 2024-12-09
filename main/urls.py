@@ -28,4 +28,18 @@ urlpatterns = [
     path('orders/create/', views.create_order, name='create_order'),
     path('orders/<int:order_id>/update/', views.update_order, name='update_order'),
     path('orders/<int:order_id>/delete/', views.delete_order, name='delete_order'),
+
+    # R MyPay
+    path('mypay/', views.mypay_dashboard, name='mypay_dashboard'),
+
+    # CR Transaksi MyPay
+    path('mypay/transaction/create/', views.create_mypay_transaction, name='create_mypay_transaction'),
+
+    # RU Pekerjaan Jasa
+    path('pekerjaan/', views.pekerjaan_list, name='pekerjaan_list'),
+    path('pekerjaan/<int:pekerjaan_id>/update/', views.update_pekerjaan, name='update_pekerjaan'),
+
+    # RU Status Pekerjaan Jasa
+    path('pekerjaan/status/', views.pekerjaan_status_list, name='pekerjaan_status_list'),
+    path('pekerjaan/<int:pekerjaan_id>/status/update/', views.update_pekerjaan_status, name='update_pekerjaan_status'),
 ]

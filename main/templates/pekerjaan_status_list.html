@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="home-content">
+    <h1>Status Pekerjaan Jasa</h1>
+    <table border="1" class="jobs-status-table">
+        <tr>
+            <th>Nama Subkategori</th>
+            <th>Deskripsi</th>
+            <th>Harga</th>
+            <th>Status</th>
+            <th>Aksi</th>
+        </tr>
+        {% for job in jobs %}
+        <tr>
+            <td>{{ job.subkategori.nama_subkategori }}</td>
+            <td>{{ job.deskripsi }}</td>
+            <td>Rp {{ job.harga }}</td>
+            <td>{{ job.status }}</td>
+            <td>
+                <a href="{% url 'main:update_pekerjaan_status' job.id %}">Update Status</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

@@ -1,108 +1,127 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.models import User
-from django.db import transaction
 from django.contrib.auth.decorators import login_required
-from .forms import RoleSelectionForm, PenggunaForm, OrderForm
-from .models import Pengguna, KategoriJasa, SubkategoriJasa, Order
-
-# Home page view to display categories and subcategories
-def show_home_page(request):
-    """
-    Display the home page with all categories and their subcategories.
-    """
-    categories = KategoriJasa.objects.prefetch_related('subkategori').all()
-    return render(request, 'home.html', {'categories': categories})
-
-# Registration view
-@transaction.atomic
-def register(request):
-    """
-    Handle registration for Pengguna.
-    """
-    form = None
-    if request.method == 'POST':
-        form = PenggunaForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            Pengguna.objects.create(
-                user=user,
-                nama=form.cleaned_data['nama'],
-                jenis_kelamin=form.cleaned_data['jenis_kelamin'],
-                no_hp=form.cleaned_data['no_hp'],
-                tgl_lahir=form.cleaned_data['tgl_lahir'],
-                alamat=form.cleaned_data['alamat'],
-                npwp=form.cleaned_data['npwp']
-            )
-            login(request, user)
-            return redirect('main:show_home_page')
-    else:
-        form = PenggunaForm()
-
-    return render(request, 'register.html', {'form': form})
-
-# Login view
-def login_user(request):
-    """
-    Handle user login and redirect to homepage upon successful login.
-    """
-    if request.method == 'POST':
-        no_hp = request.POST.get('no_hp')
-        password = request.POST.get('password')
-        user = None
-
-        try:
-            pengguna = Pengguna.objects.get(no_hp=no_hp)
-            user = pengguna.user
-        except Pengguna.DoesNotExist:
-            try:
-                pekerja = Pekerja.objects.get(no_hp=no_hp)
-                user = pekerja.user
-            except Pekerja.DoesNotExist:
-                user = None
-
-        if user and user.check_password(password):
-            login(request, user)
-            return redirect('main:show_home_page')  # Redirect to the homepage
-        else:
-            return render(request, 'login.html', {'error': 'Invalid No HP or password'})
-
-    return render(request, 'login.html')
+from django.db import transaction
+from .models import Pengguna, Pekerja, MyPay, MyPayTransaction, PekerjaanJasa, Order
+from .forms import PenggunaForm, OrderForm, MyPayTransactionForm, PekerjaanJasaForm
 
 
-# Logout view
-def logout_user(request):
-    """
-    Handle user logout.
-    """
-    logout(request)
-    return redirect('main:login_user')
-
-# Profile view for Pengguna
+# ---------------------------
+# FITUR 1: R MyPay
+# ---------------------------
 @login_required
-def profile_pengguna(request):
+def mypay_dashboard(request):
     """
-    View and update profile for Pengguna.
+    Display MyPay balance and transaction history for the logged-in user.
     """
-    pengguna = get_object_or_404(Pengguna, user=request.user)
+    try:
+        mypay = MyPay.objects.get(pengguna=request.user.pengguna)
+    except MyPay.DoesNotExist:
+        return render(request, 'mypay_dashboard.html', {'error': 'MyPay account not found!'})
+
+    transactions = MyPayTransaction.objects.filter(mypay=mypay).order_by('-timestamp')
+    return render(request, 'mypay_dashboard.html', {'mypay': mypay, 'transactions': transactions})
+
+
+# ---------------------------
+# FITUR 2: CR Transaksi MyPay
+# ---------------------------
+@login_required
+def create_mypay_transaction(request):
+    """
+    Create a new MyPay transaction for the logged-in user's MyPay account.
+    """
+    try:
+        mypay = MyPay.objects.get(pengguna=request.user.pengguna)
+    except MyPay.DoesNotExist:
+        return redirect('main:mypay_dashboard')  # Redirect to MyPay dashboard if no account exists
+
     if request.method == 'POST':
-        form = PenggunaForm(request.POST, instance=pengguna)
+        form = MyPayTransactionForm(request.POST)
+        if form.is_valid():
+            transaction = form.save(commit=False)
+            transaction.mypay = mypay
+
+            # Update balance based on transaction type
+            if transaction.transaction_type == 'credit':
+                mypay.balance += transaction.amount
+            elif transaction.transaction_type == 'debit' and mypay.balance >= transaction.amount:
+                mypay.balance -= transaction.amount
+            else:
+                return render(request, 'create_transaction.html', {'form': form, 'error': 'Insufficient balance!'})
+
+            mypay.save()
+            transaction.save()
+            return redirect('main:mypay_dashboard')
+    else:
+        form = MyPayTransactionForm()
+
+    return render(request, 'create_transaction.html', {'form': form})
+
+
+# ---------------------------
+# FITUR 3: RU Pekerjaan Jasa
+# ---------------------------
+@login_required
+def pekerjaan_list(request):
+    """
+    Display all available job services for the logged-in pekerja.
+    """
+    jobs = PekerjaanJasa.objects.filter(pekerja__user=request.user).order_by('status')
+    return render(request, 'pekerjaan_list.html', {'jobs': jobs})
+
+
+@login_required
+def update_pekerjaan(request, pekerjaan_id):
+    """
+    Update an existing job service for the logged-in pekerja.
+    """
+    pekerjaan = get_object_or_404(PekerjaanJasa, id=pekerjaan_id, pekerja__user=request.user)
+
+    if request.method == 'POST':
+        form = PekerjaanJasaForm(request.POST, instance=pekerjaan)
         if form.is_valid():
             form.save()
-            return redirect('main:profile_pengguna')
+            return redirect('main:pekerjaan_list')
     else:
-        form = PenggunaForm(instance=pengguna)
-    return render(request, 'profile_pengguna.html', {'form': form})
+        form = PekerjaanJasaForm(instance=pekerjaan)
 
-# Subcategory session view
-def subcategory_session(request, subcategory_id):
-    """
-    Display details for a specific subcategory and its services.
-    """
-    subkategori = get_object_or_404(SubkategoriJasa, id=subcategory_id)
-    return render(request, 'subcategory_session.html', {'subkategori': subkategori})
+    return render(request, 'update_pekerjaan.html', {'form': form, 'pekerjaan': pekerjaan})
 
-# CRUD Orders (Pemesanan Jasa)
+
+# ---------------------------
+# FITUR 4: RU Status Pekerjaan Jasa
+# ---------------------------
+@login_required
+def pekerjaan_status_list(request):
+    """
+    Display job services grouped by their status for the logged-in pekerja.
+    """
+    jobs = PekerjaanJasa.objects.filter(pekerja__user=request.user).order_by('status')
+    return render(request, 'pekerjaan_status_list.html', {'jobs': jobs})
+
+
+@login_required
+def update_pekerjaan_status(request, pekerjaan_id):
+    """
+    Update the status of an existing job service.
+    """
+    pekerjaan = get_object_or_404(PekerjaanJasa, id=pekerjaan_id, pekerja__user=request.user)
+
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        if status in ['available', 'booked', 'completed']:
+            pekerjaan.status = status
+            pekerjaan.save()
+            return redirect('main:pekerjaan_status_list')
+        else:
+            return render(request, 'update_status.html', {'pekerjaan': pekerjaan, 'error': 'Invalid status!'})
+
+    return render(request, 'update_status.html', {'pekerjaan': pekerjaan})
+
+
+# ---------------------------
+# Order Management (CRUD Orders)
+# ---------------------------
 @login_required
 def view_orders(request):
     """
@@ -110,6 +129,7 @@ def view_orders(request):
     """
     orders = Order.objects.filter(pengguna=request.user.pengguna)
     return render(request, 'orders.html', {'orders': orders})
+
 
 @login_required
 def create_order(request):
@@ -128,16 +148,13 @@ def create_order(request):
 
     return render(request, 'create_order.html', {'form': form})
 
+
 @login_required
 def update_order(request, order_id):
     """
     Update an existing order.
     """
-    order = get_object_or_404(Order, id=order_id)
-
-    # Pastikan hanya pengguna yang berhak mengedit pesanannya
-    if order.pengguna.user != request.user:
-        return redirect('main:view_orders')
+    order = get_object_or_404(Order, id=order_id, pengguna__user=request.user)
 
     if request.method == 'POST':
         form = OrderForm(request.POST, instance=order)
@@ -149,68 +166,16 @@ def update_order(request, order_id):
 
     return render(request, 'update_order.html', {'form': form, 'order': order})
 
+
 @login_required
 def delete_order(request, order_id):
     """
     Delete an existing order.
     """
-    order = get_object_or_404(Order, id=order_id)
-
-    # Pastikan hanya pengguna yang berhak menghapus pesanannya
-    if order.pengguna.user != request.user:
-        return redirect('main:view_orders')
+    order = get_object_or_404(Order, id=order_id, pengguna__user=request.user)
 
     if request.method == 'POST':
         order.delete()
         return redirect('main:view_orders')
 
     return render(request, 'delete_order.html', {'order': order})
-
-@login_required
-def create_subcategory(request):
-    """
-    Create a new subcategory.
-    """
-    if request.method == 'POST':
-        form = SubkategoriForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('main:show_home_page')  # Arahkan kembali ke halaman utama setelah sukses
-    else:
-        form = SubkategoriForm()
-    
-    return render(request, 'create_subcategory.html', {'form': form})
-
-@login_required
-def update_subcategory(request, subcategory_id):
-    """
-    Update an existing subcategory.
-    """
-    subkategori = get_object_or_404(SubkategoriJasa, id=subcategory_id)
-
-    if request.method == 'POST':
-        form = SubkategoriForm(request.POST, instance=subkategori)
-        if form.is_valid():
-            form.save()
-            return redirect('main:show_home_page')  # Arahkan kembali ke halaman utama setelah sukses
-    else:
-        form = SubkategoriForm(instance=subkategori)
-
-    return render(request, 'update_subcategory.html', {'form': form, 'subcategory': subkategori})
-
-@login_required
-def delete_subcategory(request, subcategory_id):
-    """
-    Delete an existing subcategory.
-    """
-    subkategori = get_object_or_404(SubkategoriJasa, id=subcategory_id)
-
-    # Pastikan hanya admin atau pengguna tertentu yang dapat menghapus
-    if not request.user.is_staff:  # Contoh aturan, hanya admin
-        return redirect('main:show_home_page')
-
-    if request.method == 'POST':
-        subkategori.delete()
-        return redirect('main:show_home_page')
-
-    return render(request, 'delete_subcategory.html', {'subcategory': subkategori})

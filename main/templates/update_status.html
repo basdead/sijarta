@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="home-content">
+    <h1>Update Status Pekerjaan</h1>
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    <form method="post">
+        {% csrf_token %}
+        <label>Status:</label>
+        <select name="status" required>
+            <option value="available" {% if pekerjaan.status == 'available' %}selected{% endif %}>Available</option>
+            <option value="booked" {% if pekerjaan.status == 'booked' %}selected{% endif %}>Booked</option>
+            <option value="completed" {% if pekerjaan.status == 'completed' %}selected{% endif %}>Completed</option>
+        </select><br>
+        <button type="submit" class="custom-button">Update</button>
+    </form>
+</div>
+{% endblock %}

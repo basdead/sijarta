@@ -57,6 +57,31 @@ class Pekerja(models.Model):
         return self.nama
 
 
+# Model MyPay (Saldo dan Transaksi)
+class MyPay(models.Model):
+    pengguna = models.OneToOneField(Pengguna, on_delete=models.CASCADE, related_name='mypay')
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
+    def __str__(self):
+        return f"{self.pengguna.nama} - Saldo: {self.balance}"
+
+
+class MyPayTransaction(models.Model):
+    mypay = models.ForeignKey(MyPay, on_delete=models.CASCADE, related_name='transactions')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    transaction_type = models.CharField(
+        max_length=10,
+        choices=[
+            ('credit', 'Credit'),
+            ('debit', 'Debit')
+        ]
+    )
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.mypay.pengguna.nama} - {self.transaction_type} - {self.amount}"
+
+
 # Model Kategori Jasa
 class KategoriJasa(models.Model):
     nama_kategori = models.CharField(max_length=255, unique=True)
@@ -85,9 +110,35 @@ class SubkategoriJasa(models.Model):
     def __str__(self):
         return f"{self.nama_subkategori} - {self.kategori.nama_kategori}"
 
+
+# Model Pekerjaan Jasa
+class PekerjaanJasa(models.Model):
+    pekerja = models.ForeignKey(Pekerja, on_delete=models.CASCADE, related_name='pekerjaan')
+    subkategori = models.ForeignKey(SubkategoriJasa, on_delete=models.CASCADE, related_name='pekerjaan')
+    deskripsi = models.TextField()
+    harga = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('available', 'Available'),
+            ('booked', 'Booked'),
+            ('completed', 'Completed')
+        ],
+        default='available'
+    )
+
+    class Meta:
+        verbose_name = 'Pekerjaan Jasa'
+        verbose_name_plural = 'Pekerjaan Jasa'
+
+    def __str__(self):
+        return f"{self.subkategori.nama_subkategori} - {self.pekerja.nama} ({self.status})"
+
+
+# Model Order Jasa
 class Order(models.Model):
     pengguna = models.ForeignKey(Pengguna, on_delete=models.CASCADE, related_name='orders')
-    pekerja = models.ForeignKey(Pekerja, on_delete=models.SET_NULL, related_name='orders', null=True, blank=True)
+    pekerjaan = models.ForeignKey(PekerjaanJasa, on_delete=models.SET_NULL, related_name='orders', null=True, blank=True)
     details = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(
