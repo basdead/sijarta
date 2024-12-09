@@ -2,6 +2,7 @@
 {% load static %}
 {% load humanize %}
 {% load currency_format %}
+{% load rating_filters %}
 {% block title %}{{ subcategory.nama_subkategori }}{% endblock %}
 {% block content %}
 {% include 'navbar.html' %}
@@ -137,7 +138,8 @@
                 <div class="session-card-content">
                     <div class="sessions-grid">
                         {% for session in sessions %}
-                            {% if forloop.counter0|divisibleby:4 %}
+                            {% with row_start=forloop.counter0|default:0 %}
+                            {% if row_start|divisibleby:3 %}
                                 <div class="sessions-row">
                             {% endif %}
                             <div class="session-item">
@@ -151,9 +153,10 @@
                                 </div>
                                 {% endif %}
                             </div>
-                            {% if forloop.counter|divisibleby:4 or forloop.last %}
+                            {% if forloop.counter|divisibleby:3 or forloop.last %}
                                 </div>
                             {% endif %}
+                            {% endwith %}
                         {% empty %}
                             <div class="no-sessions">
                                 Belum ada sesi layanan tersedia.
@@ -172,7 +175,7 @@
                 <div class="workers-card-content">
                     <div class="workers-grid">
                         {% for worker in enrolled_workers %}
-                            {% if forloop.counter0|divisibleby:4 %}
+                            {% if forloop.counter0|divisibleby:3 %}
                             <div class="workers-row">
                             {% endif %}
                                 <div class="worker-item" onclick="window.location.href='/profile/{{ worker.nama|cut:' ' }}/'">
@@ -185,12 +188,66 @@
                                         <div class="workers-name">{{ worker.nama }}</div>
                                     </div>
                                 </div>
-                            {% if forloop.counter|divisibleby:4 or forloop.last %}
+                            {% if forloop.counter|divisibleby:3 or forloop.last %}
                              </div>
                             {% endif %}
                         {% empty %}
                             <div class="no-workers">
                                 Belum ada pekerja yang terdaftar.
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="reviews-container">
+                <div class="reviews-card-header" onclick="toggleReviews(this)" style="cursor: pointer;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong>Testimoni</strong>
+                        <img src="https://www.svgrepo.com/show/522029/chevron-down.svg" alt="Toggle" class="toggle-icon" style="width: 20px; height: 20px; filter: invert(100%);">
+                    </div>
+                </div>
+                <div class="reviews-card-content">
+                    <div class="reviews-grid">
+                        {% for testimoni in testimonials %}
+                            {% with row_start=forloop.counter0|default:0 %}
+                            {% if row_start|divisibleby:3 %}
+                                <div class="reviews-row">
+                            {% endif %}
+                                <div class="reviews-item">
+                                    <div class="reviews-info">
+                                        <div class="review-header">
+                                            <div class="reviewer-name">{{ testimoni.nama_pelanggan }}</div>
+                                            <div class="review-date">{{ testimoni.tanggal }}</div>
+                                        </div>
+                                        <div class="rating">
+                                            {% with star_rating=testimoni.star_rating %}
+                                                {% for i in "12345" %}
+                                                    {% with current_star=forloop.counter|stringformat:"s" %}
+                                                        {% if star_rating >= current_star|add:"0" %}
+                                                            <!-- Full star -->
+                                                            <img src="https://www.svgrepo.com/show/513354/star.svg" alt="star" class="star-icon full">
+                                                        {% elif star_rating >= current_star|add:"-0.5" %}
+                                                            <!-- Half star -->
+                                                            <img src="https://www.svgrepo.com/show/418904/half-star-shape.svg" alt="half star" class="star-icon half">
+                                                        {% else %}
+                                                            <!-- Empty star -->
+                                                            <img src="https://www.svgrepo.com/show/513354/star.svg" alt="star" class="star-icon empty">
+                                                        {% endif %}
+                                                    {% endwith %}
+                                                {% endfor %}
+                                            {% endwith %}
+                                            <span class="rating-number">({{ testimoni.rating }}/10)</span>
+                                        </div>
+                                        <div class="review-text">{{ testimoni.komentar }}</div>
+                                    </div>
+                                </div>
+                            {% if forloop.counter|divisibleby:3 or forloop.last %}
+                                </div>
+                            {% endif %}
+                            {% endwith %}
+                        {% empty %}
+                            <div class="no-reviews">
+                                Belum ada testimoni untuk subkategori ini.
                             </div>
                         {% endfor %}
                     </div>
@@ -334,14 +391,14 @@
         gap: 0.75rem;
     }
 
-    .session-container, .workers-container {
+    .session-container, .workers-container, .reviews-container {
         padding: 10px;
         width: 100%;
         display: flex;
         flex-direction: column;
     }
 
-    .session-card-header, .workers-card-header {
+    .session-card-header, .workers-card-header, .reviews-card-header {
         padding: 10px 20px;
         margin-bottom: 0;
         background-color:#177E89;
@@ -352,15 +409,15 @@
         transition: border-radius 0.3s ease;
     }
 
-    .session-card-header.collapsed, .workers-card-header.collapsed {
+    .session-card-header.collapsed, .workers-card-header.collapsed, .reviews-card-header.collapsed {
         border-radius: 0.5rem;
     }
 
-    .session-card-header:not(.collapsed), .workers-card-header:not(.collapsed) {
+    .session-card-header:not(.collapsed), .workers-card-header:not(.collapsed), .reviews-card-header:not(.collapsed) {
         border-radius: 0.5rem 0.5rem 0 0;
     }
 
-    .session-card-content, .workers-card-content {
+    .session-card-content, .workers-card-content, .reviews-card-content {
         padding: 20px;
         margin-bottom: 0;
         background-color:#cdddde;
@@ -371,7 +428,7 @@
         transition: all 0.3s ease;
     }
 
-    .session-card-content.hidden, .workers-card-content.hidden {
+    .session-card-content.hidden, .workers-card-content.hidden, .reviews-card-content.hidden {
         display: none;
     }
 
@@ -421,6 +478,85 @@
         font-weight: bold;
     }
 
+    .reviews-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .reviews-item {
+        background: #fff;
+        border-radius: 8px;
+        padding: 16px;
+        width: 100%;
+        height: 100%;
+    }
+
+    .reviews-info {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .reviewer-name {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .review-date {
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .rating {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .rating-number {
+        margin-left: 8px;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .review-text {
+        color: #444;
+        line-height: 1.5;
+        margin-top: 8px;
+    }
+
+    .star-icon {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .star-icon.full {
+        filter: invert(71%) sepia(99%) saturate(387%) hue-rotate(358deg) brightness(103%) contrast(105%);
+    }
+    
+    .star-icon.half {
+        filter: invert(71%) sepia(99%) saturate(387%) hue-rotate(358deg) brightness(103%) contrast(105%);
+    }
+    
+    .star-icon.empty {
+        filter: invert(88%) sepia(6%) saturate(111%) hue-rotate(169deg) brightness(88%) contrast(85%);
+    }
+
+    .no-reviews {
+        text-align: center;
+        padding: 2rem;
+        color: #666;
+        background: white;
+        border-radius: 0.5rem;
+    }
+
     .p_buttons {
         margin-left: auto;
     }
@@ -457,7 +593,7 @@
     }
 
     .worker-item {
-        flex: 0 0 calc(25% - 15px);
+        flex: 0 0 calc(33.33% - 15px);
         background: white;
         border-radius: 8px;
         padding: 8px;
@@ -501,6 +637,12 @@
     }
 
     function toggleWorkers(header) {
+        const content = header.nextElementSibling;
+        header.classList.toggle('collapsed');
+        content.classList.toggle('hidden');
+    }
+
+    function toggleReviews(header) {
         const content = header.nextElementSibling;
         header.classList.toggle('collapsed');
         content.classList.toggle('hidden');

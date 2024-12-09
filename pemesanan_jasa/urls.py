@@ -8,4 +8,5 @@ urlpatterns = [
     path('form/<str:subcategory_name>/', views.order_jasa, name='order_form'),
     path('validate-discount/', views.validate_discount, name='validate_discount'),
     path('cancel/', views.cancel_order, name='cancel_order'),
+    path('review/<uuid:order_id>/', views.review_order, name='review_order'),
 ]

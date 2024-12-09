@@ -83,14 +83,14 @@ def show_discount_page(request):
         connection.close()
 
 
-def voucher_purchase(request, voucher_code):
+def show_voucher_form(request, voucher_code):
     """
-    View for handling voucher purchase
+    View for showing voucher purchase form
     """
     # Check authentication
     is_authenticated = request.session.get('is_authenticated', False)
-    user_type = request.session.get('user_type', None)
     user_id = request.session.get('user_id', None)
+    user_type = request.session.get('user_type', None)
     
     if not is_authenticated or user_type != 'pelanggan':
         messages.error(request, 'Please log in as a customer to purchase vouchers')
@@ -103,131 +103,201 @@ def voucher_purchase(request, voucher_code):
         return redirect('main:show_home_page')
         
     try:
-        if request.method == 'POST':
-            voucher_id = request.POST.get('voucher_id')
-            metode_bayar = request.POST.get('metode_bayar')
-            
-            if not all([voucher_id, metode_bayar]):
-                messages.error(request, 'Please fill in all fields')
-                return redirect('diskon:voucher_purchase', voucher_code=voucher_code)
-            
-            # Get voucher details
-            cursor.execute("""
-                SELECT v.Kode, v.Harga, v.KuotaPenggunaan, v.JmlHariBerlaku, d.Potongan
-                FROM VOUCHER v
-                JOIN DISKON d ON v.Kode = d.Kode
-                WHERE v.Kode = %s
-            """, [voucher_id])
-            voucher = cursor.fetchone()
-            
-            if not voucher:
-                messages.error(request, 'Invalid voucher')
-                return redirect('diskon:voucher_purchase', voucher_code=voucher_code)
-            
-            # For MyPay, check balance
-            if metode_bayar == 'mypay':
-                cursor.execute('SELECT saldomypay FROM "USER" WHERE id = %s', [user_id])
-                user_balance = cursor.fetchone()[0]
-                
-                if user_balance < voucher[1]:  # voucher[1] is the price
-                    messages.error(request, 'Maaf, saldo Anda tidak cukup untuk membeli voucher ini.')
-                    return redirect('diskon:voucher_purchase', voucher_code=voucher_code)
-            
-            # Begin transaction
-            cursor.execute('BEGIN')
-            try:
-                if metode_bayar == 'mypay':
-                    # Deduct balance from user's MyPay
-                    cursor.execute("""
-                        UPDATE "USER"
-                        SET saldomypay = saldomypay - %s
-                        WHERE id = %s
-                    """, [voucher[1], user_id])
-                
-                # Store voucher in session
-                if 'purchased_vouchers' not in request.session:
-                    request.session['purchased_vouchers'] = []
-                
-                purchased_voucher = {
-                    'kode': voucher[0],
-                    'tgl_beli': date.today().strftime('%Y-%m-%d'),
-                    'jml_pemakaian': 0
-                }
-                request.session['purchased_vouchers'].append(purchased_voucher)
-                request.session.modified = True
-                
-                cursor.execute('COMMIT')
-                
-                # Calculate expiry date
-                expiry_date = (date.today() + timedelta(days=voucher[3])).strftime('%d/%m/%Y')
-                
-                messages.success(request, f'Selamat! Anda berhasil membeli voucher kode {voucher[0]}. Voucher ini akan berlaku hingga tanggal {expiry_date} dengan kuota penggunaan sebanyak {voucher[2]} kali.')
-                return redirect('diskon:show_discount_page')
-                
-            except Exception as e:
-                cursor.execute('ROLLBACK')
-                logger.error(f'Error during voucher purchase transaction: {str(e)}')
-                messages.error(request, 'Failed to process purchase')
-                return redirect('diskon:voucher_purchase', voucher_code=voucher_code)
+        # Get selected voucher details
+        cursor.execute('''
+            SELECT v.kode, v.jmlhariberlaku, v.kuotapenggunaan, v.harga, d.potongan, d.mintrpemesanan
+            FROM VOUCHER v
+            JOIN DISKON d ON v.kode = d.kode
+            WHERE v.kode = %s
+        ''', [voucher_code])
+        voucher_data = cursor.fetchone()
         
-        else:  # GET request - show purchase form
+        if not voucher_data:
+            messages.error(request, 'Voucher not found')
+            return redirect('diskon:show_discount_page')
+            
+        voucher = {
+            'kode': voucher_data[0],
+            'jmlhariberlaku': voucher_data[1],
+            'kuota': voucher_data[2],
+            'harga': voucher_data[3],
+            'potongan': voucher_data[4],
+            'mintrpemesanan': voucher_data[5],
+            'nama': f"{voucher_data[0]} - Rp {voucher_data[3]:,.0f}"
+        }
+        
+        # Get user's MyPay balance
+        cursor.execute('SELECT saldomypay FROM "USER" WHERE id = %s', [user_id])
+        user_balance = cursor.fetchone()[0]
+        
+        # Get payment methods
+        cursor.execute('''
+            SELECT id, nama 
+            FROM metode_bayar 
+            ORDER BY nama
+        ''')
+        payment_methods = [
+            {'id': row[0], 'nama': row[1]} 
+            for row in cursor.fetchall()
+        ]
+        
+        context = {
+            'voucher': voucher,
+            'user_balance': user_balance,
+            'payment_methods': payment_methods,
+            'selected_voucher_code': voucher_code
+        }
+        
+        return render(request, 'voucher_form.html', context)
+        
+    except Exception as e:
+        logger.error(f'Error showing voucher form: {str(e)}')
+        messages.error(request, 'Failed to load voucher form')
+        return redirect('diskon:show_discount_page')
+        
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def voucher_purchase(request, voucher_code):
+    """
+    View for handling voucher purchase
+    """
+    # Check authentication
+    is_authenticated = request.session.get('is_authenticated', False)
+    user_id = request.session.get('user_id', None)
+    user_type = request.session.get('user_type', None)
+    
+    if not is_authenticated or user_type != 'pelanggan':
+        messages.error(request, 'Please log in as a customer to purchase vouchers')
+        return redirect('main:login_user')
+    
+    connection, cursor = get_db_connection()
+    if connection is None or cursor is None:
+        logger.error('Database connection failed')
+        messages.error(request, 'Failed to connect to database')
+        return redirect('main:show_home_page')
+        
+    try:
+        if request.method == 'GET':
             # Get selected voucher details
-            cursor.execute("""
-                SELECT v.Kode, v.JmlHariBerlaku, v.KuotaPenggunaan, v.Harga, d.Potongan, d.MinTrPemesanan
+            cursor.execute('''
+                SELECT v.kode, v.jmlhariberlaku, v.kuotapenggunaan, v.harga, d.potongan, d.mintrpemesanan
                 FROM VOUCHER v
-                JOIN DISKON d ON v.Kode = d.Kode
-                WHERE v.Kode = %s
-            """, [voucher_code])
-            selected_voucher = cursor.fetchone()
+                JOIN DISKON d ON v.kode = d.kode
+                WHERE v.kode = %s
+            ''', [voucher_code])
+            voucher_data = cursor.fetchone()
             
-            if not selected_voucher:
-                messages.error(request, 'Invalid voucher code')
+            if not voucher_data:
+                messages.error(request, 'Voucher not found')
                 return redirect('diskon:show_discount_page')
-            
-            # Get all vouchers for dropdown
-            cursor.execute("""
-                SELECT v.Kode, v.JmlHariBerlaku, v.KuotaPenggunaan, v.Harga, d.Potongan, d.MinTrPemesanan
-                FROM VOUCHER v
-                JOIN DISKON d ON v.Kode = d.Kode
-            """)
-            vouchers = []
-            for row in cursor.fetchall():
-                vouchers.append({
-                    'id': row[0],
-                    'nama': f"{row[0]} - Rp {row[3]:,.0f}".replace(',', '.'),
-                    'harga': row[3],
-                    'potongan': row[4],
-                    'min_pemesanan': row[5]
-                })
+                
+            voucher = {
+                'kode': voucher_data[0],
+                'jmlhariberlaku': voucher_data[1],
+                'kuota': voucher_data[2],
+                'harga': voucher_data[3],
+                'potongan': voucher_data[4],
+                'mintrpemesanan': voucher_data[5],
+                'nama': f"{voucher_data[0]} - Rp {voucher_data[3]:,.0f}"
+            }
             
             # Get user's MyPay balance
             cursor.execute('SELECT saldomypay FROM "USER" WHERE id = %s', [user_id])
             user_balance = cursor.fetchone()[0]
             
-            # Get all payment methods
-            cursor.execute("""
-                SELECT id, nama
-                FROM METODE_BAYAR
+            # Get payment methods
+            cursor.execute('''
+                SELECT id, nama 
+                FROM metode_bayar 
                 ORDER BY nama
-            """)
+            ''')
             payment_methods = [
                 {'id': row[0], 'nama': row[1]} 
                 for row in cursor.fetchall()
             ]
             
             context = {
-                'vouchers': vouchers,
-                'selected_voucher_code': voucher_code,
+                'voucher': voucher,
                 'user_balance': user_balance,
                 'payment_methods': payment_methods
             }
             
             return render(request, 'voucher_form.html', context)
             
-    except Exception as error:
-        logger.error(f'Error in voucher purchase: {str(error)}')
-        messages.error(request, 'An error occurred')
+        elif request.method == 'POST':
+            # Get customer ID
+            cursor.execute('SELECT id FROM PELANGGAN WHERE id = %s', [user_id])
+            customer_id = cursor.fetchone()
+            
+            if not customer_id:
+                messages.error(request, 'Customer not found')
+                return redirect('diskon:show_discount_page')
+                
+            customer_id = customer_id[0]
+            
+            # Get voucher details
+            cursor.execute('''
+                SELECT v.jmlhariberlaku, v.kuotapenggunaan, v.harga
+                FROM VOUCHER v
+                WHERE v.kode = %s
+            ''', [voucher_code])
+            voucher_data = cursor.fetchone()
+            
+            if not voucher_data:
+                messages.error(request, 'Voucher not found')
+                return redirect('diskon:show_discount_page')
+                
+            validity_days = voucher_data[0]
+            usage_quota = voucher_data[1]
+            price = voucher_data[2]
+            
+            # Get payment method
+            metode_bayar = request.POST.get('metode_bayar')
+            if not metode_bayar:
+                messages.error(request, 'Please select a payment method')
+                return redirect('diskon:voucher_purchase', voucher_code=voucher_code)
+            
+            # Calculate validity period
+            tgl_awal = date.today()
+            tgl_akhir = tgl_awal + timedelta(days=validity_days)
+            
+            # Get MyPay payment method ID
+            cursor.execute('''
+                SELECT id 
+                FROM metode_bayar 
+                WHERE nama = 'MyPay'
+            ''')
+            mypay_id = cursor.fetchone()
+            
+            if not mypay_id:
+                messages.error(request, 'Payment method not found')
+                return redirect('diskon:show_discount_page')
+                
+            mypay_id = mypay_id[0]
+            
+            # Insert into TR_PEMBELIAN_VOUCHER
+            cursor.execute('''
+                INSERT INTO tr_pembelian_voucher 
+                (tglawal, tglakhir, telahdigunakan, idpelanggan, idvoucher, idmetodebayar)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                RETURNING id
+            ''', [tgl_awal, tgl_akhir, 0, customer_id, voucher_code, mypay_id])
+            
+            purchase_id = cursor.fetchone()[0]
+            connection.commit()
+            
+            messages.success(request, f'Successfully purchased voucher {voucher_code}')
+            return redirect('diskon:show_discount_page')
+            
+    except Exception as e:
+        logger.error(f'Error in voucher purchase: {str(e)}')
+        connection.rollback()
+        messages.error(request, 'Failed to purchase voucher')
         return redirect('diskon:show_discount_page')
+        
     finally:
         cursor.close()
         connection.close()

@@ -179,16 +179,53 @@ def order_jasa(request, subcategory_name):
                 is_promo = cursor.fetchone() is not None
 
                 if not is_promo:
-                    # Not a PROMO, check if it's a VOUCHER
+                    # Not a PROMO, check if it's a VOUCHER and if the current user owns it
                     cursor.execute('''
-                        SELECT 1
+                        SELECT v.JmlHariBerlaku, tr.TglAwal, v.KuotaPenggunaan,
+                               (SELECT COUNT(*) FROM TR_PEMESANAN_JASA t WHERE t.IdDiskon = v.Kode) as used_count
                         FROM VOUCHER v
                         JOIN TR_PEMBELIAN_VOUCHER tr ON v.Kode = tr.IdVoucher
                         WHERE v.Kode = %s AND tr.IdPelanggan = %s
-                    ''', (kode_diskon, user_id))
+                    ''', (kode_diskon, request.session.get('user_id')))
                     
-                    if not cursor.fetchone():
+                    voucher = cursor.fetchone()
+                    if not voucher:
                         messages.error(request, 'Invalid voucher or voucher not purchased by this user')
+                        return render(request, 'order_form.html', {
+                            'subcategory': {
+                                'id': subcategory_data[0],
+                                'nama_subkategori': subcategory_data[1],
+                                'deskripsi': subcategory_data[2]
+                            },
+                            'category': {'nama_kategori': subcategory_data[3]},
+                            'sessions': sessions,
+                            'selected_session': selected_session,
+                            'payment_methods': [{'id': row[0], 'nama': row[1]} for row in cursor.fetchall()],
+                            'current_date': get_user_date(request)
+                        })
+
+                    jml_hari, tgl_awal, kuota, used_count = voucher
+                    
+                    # Check if voucher has expired
+                    expiry_date = tgl_awal + timedelta(days=jml_hari)
+                    if expiry_date < datetime.now().date():
+                        messages.error(request, 'Voucher has expired')
+                        return render(request, 'order_form.html', {
+                            'subcategory': {
+                                'id': subcategory_data[0],
+                                'nama_subkategori': subcategory_data[1],
+                                'deskripsi': subcategory_data[2]
+                            },
+                            'category': {'nama_kategori': subcategory_data[3]},
+                            'sessions': sessions,
+                            'selected_session': selected_session,
+                            'payment_methods': [{'id': row[0], 'nama': row[1]} for row in cursor.fetchall()],
+                            'current_date': get_user_date(request)
+                        })
+                    
+                    # Check usage quota
+                    if used_count >= (kuota or float('inf')):  # If kuota is NULL, treat as unlimited
+                        messages.error(request, 'Voucher usage limit reached')
                         return render(request, 'order_form.html', {
                             'subcategory': {
                                 'id': subcategory_data[0],
@@ -409,29 +446,28 @@ def validate_discount(request):
             if tgl_akhir < datetime.now().date():
                 return JsonResponse({'error': 'Promo has expired'}, status=400)
         else:
-            # If not PROMO, check if it's a VOUCHER
+            # If not PROMO, check if it's a VOUCHER and if the current user owns it
             cursor.execute('''
-                SELECT v.JmlHariBerlaku, v.TglPembelian, v.KuotaPenggunaan,
-                       COUNT(t.IdDiskon) as used_count
+                SELECT v.JmlHariBerlaku, tr.TglAwal, v.KuotaPenggunaan,
+                       (SELECT COUNT(*) FROM TR_PEMESANAN_JASA t WHERE t.IdDiskon = v.Kode) as used_count
                 FROM VOUCHER v
-                LEFT JOIN TR_PEMESANAN_JASA t ON v.Kode = t.IdDiskon
-                WHERE v.Kode = %s
-                GROUP BY v.Kode, v.JmlHariBerlaku, v.TglPembelian, v.KuotaPenggunaan
-            ''', (kode_diskon,))
+                JOIN TR_PEMBELIAN_VOUCHER tr ON v.Kode = tr.IdVoucher
+                WHERE v.Kode = %s AND tr.IdPelanggan = %s
+            ''', (kode_diskon, request.session.get('user_id')))
             
             voucher = cursor.fetchone()
             if not voucher:
-                return JsonResponse({'error': 'Invalid voucher'}, status=400)
+                return JsonResponse({'error': 'Invalid voucher or voucher not purchased by this user'}, status=400)
                 
-            jml_hari, tgl_pembelian, kuota, used_count = voucher
+            jml_hari, tgl_awal, kuota, used_count = voucher
             
             # Check if voucher has expired
-            expiry_date = tgl_pembelian + timedelta(days=jml_hari)
+            expiry_date = tgl_awal + timedelta(days=jml_hari)
             if expiry_date < datetime.now().date():
                 return JsonResponse({'error': 'Voucher has expired'}, status=400)
             
             # Check usage quota
-            if used_count >= kuota:
+            if used_count >= (kuota or float('inf')):  # If kuota is NULL, treat as unlimited
                 return JsonResponse({'error': 'Voucher usage limit reached'}, status=400)
         
         # If we get here, the discount is valid
@@ -624,3 +660,90 @@ def cancel_order(request):
     except Exception as e:
         logger.error(f"Error cancelling order: {str(e)}")
         return JsonResponse({'status': 'error', 'message': str(e)})
+
+
+def review_order(request, order_id):
+    """
+    View for reviewing completed orders
+    """
+    # Check authentication
+    is_authenticated = request.session.get('is_authenticated', False)
+    user_type = request.session.get('user_type', None)
+    user_id = request.session.get('user_id', None)
+    
+    if not is_authenticated or not user_type or not user_id:
+        messages.error(request, 'Please log in to continue')
+        return redirect('main:login_user')
+    
+    if user_type != 'pelanggan':
+        messages.error(request, 'Only customers can review orders')
+        return redirect('main:show_home_page')
+
+    connection, cursor = get_db_connection()
+    if connection is None or cursor is None:
+        messages.error(request, 'Database connection failed')
+        return redirect('main:show_home_page')
+
+    try:
+        # Get the order and check if it's completed
+        cursor.execute("""
+            WITH LatestStatus AS (
+                SELECT ts.idtrpemesanan, ts.idstatus, ts.tglwaktu, s.status,
+                    ROW_NUMBER() OVER (PARTITION BY ts.idtrpemesanan ORDER BY ts.tglwaktu DESC) as rn
+                FROM tr_pemesanan_status ts
+                JOIN status_pemesanan s ON ts.idstatus = s.id
+                WHERE ts.idtrpemesanan = %s
+            )
+            SELECT tp.id, ls.status 
+            FROM tr_pemesanan_jasa tp
+            LEFT JOIN LatestStatus ls ON ls.idtrpemesanan = tp.id AND ls.rn = 1
+            WHERE tp.id = %s
+        """, [order_id, order_id])
+        
+        order = cursor.fetchone()
+        if not order:
+            messages.error(request, 'Order tidak ditemukan')
+            return redirect('pemesanan_jasa:show_my_orders')
+
+        if order[1] != 'Pesanan selesai':
+            messages.error(request, 'Hanya pesanan yang sudah selesai yang dapat direview')
+            return redirect('pemesanan_jasa:show_my_orders')
+
+        if request.method == 'POST':
+            komentar = request.POST.get('komentar', '').strip()
+            skala_rating = request.POST.get('skala_rating')
+
+            if not komentar:
+                messages.error(request, 'Komentar tidak boleh kosong')
+                return redirect('pemesanan_jasa:review_order', order_id=order_id)
+
+            if not skala_rating:
+                messages.error(request, 'Silakan pilih rating')
+                return redirect('pemesanan_jasa:review_order', order_id=order_id)
+
+            try:
+                # Insert review into TESTIMONI table
+                cursor.execute("""
+                    INSERT INTO TESTIMONI (IdTrPemesanan, Tgl, Teks, Rating)
+                    VALUES (%s, CURRENT_DATE, %s, %s)
+                """, [order_id, komentar, skala_rating])
+                connection.commit()
+                
+                messages.success(request, 'Review berhasil ditambahkan')
+                return redirect('pemesanan_jasa:show_my_orders')
+            except Exception as e:
+                connection.rollback()
+                messages.error(request, 'Gagal menambahkan review')
+                return redirect('pemesanan_jasa:review_order', order_id=order_id)
+
+        # GET request - show the review form
+        return render(request, 'testimoni.html', {
+            'order_id': order_id
+        })
+
+    except Exception as e:
+        messages.error(request, f'An error occurred: {str(e)}')
+        return redirect('pemesanan_jasa:show_my_orders')
+    finally:
+        cursor.close()
+        connection.close()

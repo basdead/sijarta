@@ -8,7 +8,9 @@ logger = logging.getLogger(__name__)
 # Create your views here.
 
 def show_subcategory(request, subcategory_name):
-    # Log the raw input
+    """
+    View for showing subcategory details
+    """
     logger.info(f"Raw subcategory_name from URL: {subcategory_name!r}")
     
     # Decode URL-encoded name
@@ -41,67 +43,91 @@ def show_subcategory(request, subcategory_name):
     subcategory_name = ''.join(result)
     logger.info(f"After processing: {subcategory_name!r}")
     
-    logger.info(f"Looking for subcategory: {subcategory_name}")
-    
     try:
         conn, cur = get_db_connection()
         if not conn or not cur:
             logger.error("Could not establish database connection")
             return redirect('main:show_home_page')
         
-        # First, let's see what subcategories exist
-        cur.execute("SELECT namasubkategori FROM SUBKATEGORI_JASA")
-        all_subcats = cur.fetchall()
-        logger.info(f"All subcategories in database: {all_subcats}")
+        # First get the subcategory ID
+        cur.execute("""
+            SELECT id, namasubkategori, deskripsi, kategorijasaid
+            FROM SUBKATEGORI_JASA
+            WHERE namasubkategori = %s
+        """, [subcategory_name])
         
-        # Fetch subcategory details using name
-        query = """
-            SELECT s.namasubkategori, s.deskripsi, k.namakategori, k.id
-            FROM SUBKATEGORI_JASA s
-            JOIN KATEGORI_JASA k ON s.kategorijasaid = k.id
-            WHERE s.namasubkategori = %s
-        """
-        logger.info(f"Executing query with name: {subcategory_name!r}")  # !r shows quotes and escapes
-        cur.execute(query, [subcategory_name])
+        subcategory_result = cur.fetchone()
+        logger.info(f"Subcategory query result: {subcategory_result!r}")
         
-        result = cur.fetchone()
-        logger.info(f"Query result: {result!r}")
-        
-        if not result:
+        if not subcategory_result:
             logger.warning(f"Subcategory not found: {subcategory_name!r}")
+            cur.close()
+            conn.close()
+            return redirect('main:show_home_page')
+
+        subcategory_id = subcategory_result[0]
+        if subcategory_id is None:
+            logger.error("Subcategory ID is None")
+            cur.close()
+            conn.close()
+            return redirect('main:show_home_page')
+        
+        # Now get the category info
+        cur.execute("""
+            SELECT namakategori, id
+            FROM KATEGORI_JASA
+            WHERE id = %s
+        """, [subcategory_result[3]])
+        
+        category_result = cur.fetchone()
+        logger.info(f"Category query result: {category_result!r}")
+        
+        if not category_result:
+            logger.error("Category not found")
             cur.close()
             conn.close()
             return redirect('main:show_home_page')
         
         subcategory = {
-            'nama_subkategori': result[0],
-            'deskripsi': result[1]
+            'nama_subkategori': subcategory_result[1],
+            'deskripsi': subcategory_result[2]
         }
         
         category = {
-            'nama_kategori': result[2],
-            'id_kategori': result[3]
+            'nama_kategori': category_result[0],
+            'id_kategori': category_result[1]
         }
         
-        # Fetch sesi_layanan for this subcategory
+        # Fetch sesi_layanan using subcategory ID
         cur.execute("""
-            SELECT sesi, harga 
-            FROM SESI_LAYANAN sl
-            JOIN SUBKATEGORI_JASA sj ON sl.subkategoriid = sj.id
-            WHERE sj.namasubkategori = %s
+            SELECT COALESCE(sesi, 0) as sesi, COALESCE(harga, 0.0) as harga
+            FROM SESI_LAYANAN
+            WHERE subkategoriid = %s
             ORDER BY sesi
-        """, [subcategory_name])
+        """, [subcategory_id])
         
         raw_sessions = cur.fetchall()
-        logger.info(f"Raw session data: {raw_sessions}")  # Log raw data
+        logger.info(f"Session query result: {raw_sessions!r}")
+        
         sessions = []
         for row in raw_sessions:
-            sesi, harga = row
-            logger.info(f"Processing session - sesi: {sesi}, harga: {harga} (type: {type(harga)})")  # Log each value
-            sessions.append({
-                'sesi': sesi,
-                'harga': float(harga) if harga is not None else 0  # Ensure we have a float
-            })
+            try:
+                sesi, harga = row
+                logger.info(f"Processing session - sesi: {sesi!r}, harga: {harga!r}")
+                
+                # Convert to appropriate types with defaults
+                sesi_val = int(sesi) if sesi is not None else 0
+                harga_val = float(harga) if harga is not None else 0.0
+                
+                sessions.append({
+                    'sesi': sesi_val,
+                    'harga': harga_val
+                })
+            except (TypeError, ValueError) as e:
+                logger.error(f"Error processing session {row!r}: {str(e)}")
+                continue
+        
+        logger.info(f"Final sessions list: {sessions!r}")
         
         # Fetch enrolled pekerja for this subcategory
         cur.execute("""
@@ -120,6 +146,33 @@ def show_subcategory(request, subcategory_name):
             for row in cur.fetchall()
         ]
         
+        # Fetch testimonials for this subcategory
+        cur.execute("""
+            SELECT t.tgl, t.teks, t.rating, u.nama
+            FROM TESTIMONI t
+            JOIN TR_PEMESANAN_JASA tp ON t.idtrpemesanan = tp.id
+            JOIN PELANGGAN p ON tp.idpelanggan = p.id
+            JOIN "USER" u ON p.id = u.id
+            JOIN SUBKATEGORI_JASA sj ON tp.idkategorijasa = sj.id
+            WHERE sj.id = %s
+            ORDER BY t.tgl DESC
+        """, [subcategory_id])
+        
+        testimonials = []
+        for row in cur.fetchall():
+            testimonials.append({
+                'tanggal': row[0],
+                'komentar': row[1],
+                'rating': row[2],
+                'nama_pelanggan': row[3]
+            })
+        
+        # Calculate star rating (convert 10-point to 5-star)
+        for testimoni in testimonials:
+            testimoni['star_rating'] = float(testimoni['rating']) / 2
+        
+        logger.info(f"Testimonials found: {len(testimonials)}")
+        
         cur.close()
         conn.close()
         
@@ -137,6 +190,7 @@ def show_subcategory(request, subcategory_name):
                 'category': category,
                 'sessions': sessions,
                 'enrolled_workers': enrolled_workers,
+                'testimonials': testimonials,
                 'navbar_attributes': navbar_attributes  # Add navbar data to context
             }
             
