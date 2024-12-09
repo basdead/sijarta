@@ -402,6 +402,59 @@
         return cookieValue;
     }
 
+    function updateStatus(orderId) {
+        const statusCell = event.target.closest('.status-item').querySelector('.status-cell');
+        const currentStatus = statusCell.textContent.trim();
+        let newStatus;
+        
+        // Determine next status based on current status
+        switch (currentStatus) {
+            case 'Menunggu Pekerja Berangkat':
+                newStatus = 'Pekerja tiba di lokasi';
+                break;
+            case 'Pekerja tiba di lokasi':
+                newStatus = 'Pelayanan jasa sedang dilakukan';
+                break;
+            case 'Pelayanan jasa sedang dilakukan':
+                newStatus = 'Pesanan selesai';
+                break;
+            default:
+                return; // Don't proceed if status is not in sequence
+        }
+
+        const csrftoken = getCookie('csrftoken');
+        
+        fetch('{% url "pekerjaan_jasa:update_status" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify({
+                order_id: orderId,
+                new_status: newStatus
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Update the status text
+                statusCell.textContent = newStatus;
+                
+                // Hide the button if status is "Pesanan selesai"
+                if (newStatus === 'Pesanan selesai') {
+                    event.target.style.display = 'none';
+                }
+            } else {
+                alert(data.message || 'Failed to update status');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating the status');
+        });
+    }
+
     // Get references to the dropdowns
     const categoryDropdown = document.getElementById('category-dropdown');
     const statusDropdown = document.getElementById('status-dropdown');

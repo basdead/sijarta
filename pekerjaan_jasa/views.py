@@ -1,10 +1,11 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
+from django.views.decorators.http import require_http_methods
 import json
 from utils.query import get_db_connection
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -396,11 +397,21 @@ def show_work_status(request):
 
             orders = []
             for order in orders_data:
+                # Calculate end date by adding session days to TglPekerjaan
+                work_date = order[3]  # TglPekerjaan
+                session_days = order[2]  # namasesi (number of days)
+                if work_date:
+                    # Add session days to work date
+                    end_date = work_date + timedelta(days=session_days)
+                    date_display = f"{work_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')}"
+                else:
+                    date_display = ''
+
                 order_dict = {
                     'id': order[0],
                     'subcategory': order[1],
                     'session': order[2],
-                    'date': f"{order[3].strftime('%d/%m/%Y')} - {order[4].strftime('%H.%M')}" if order[3] and order[4] else '',  # Combine TglPekerjaan and WaktuPekerjaan
+                    'date': date_display,  # Show date range
                     'customer_name': order[5],
                     'price': order[6],
                     'category_id': str(order[7]),
@@ -447,3 +458,46 @@ def show_work_status(request):
         if 'connection' in locals() and connection:
             connection.close()
             logger.info("Database connection closed")
+
+@require_http_methods(["POST"])
+def update_status(request):
+    try:
+        data = json.loads(request.body)
+        order_id = data.get('order_id')
+        new_status = data.get('new_status')
+
+        if not order_id or not new_status:
+            return JsonResponse({'status': 'error', 'message': 'Missing required fields'})
+
+        connection, cursor = get_db_connection()
+        if not connection or not cursor:
+            return JsonResponse({'status': 'error', 'message': 'Database connection failed'})
+
+        try:
+            # Get the status ID for the new status
+            cursor.execute("""
+                SELECT Id FROM STATUS_PEMESANAN WHERE Status = %s
+            """, [new_status])
+            status_result = cursor.fetchone()
+            
+            if not status_result:
+                return JsonResponse({'status': 'error', 'message': 'Invalid status'})
+            
+            status_id = status_result[0]
+            
+            # Insert the new status
+            cursor.execute("""
+                INSERT INTO TR_PEMESANAN_STATUS (IdTrPemesanan, IdStatus, TglWaktu)
+                VALUES (%s, %s, CURRENT_TIMESTAMP)
+            """, [order_id, status_id])
+            
+            connection.commit()
+            return JsonResponse({'status': 'success'})
+            
+        finally:
+            cursor.close()
+            connection.close()
+            
+    except Exception as e:
+        logger.error(f"Error updating status: {str(e)}")
+        return JsonResponse({'status': 'error', 'message': str(e)})
