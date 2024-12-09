@@ -375,12 +375,34 @@ def update_transaction_form(request):
                     )
                 ''', (user_id, nominal))
 
+                # Get the status ID for "Mencari Pekerja Terdekat"
+                cursor.execute('''
+                    SELECT id FROM STATUS_PEMESANAN 
+                    WHERE LOWER(status) = LOWER('Mencari Pekerja Terdekat')
+                ''')
+                status_id = cursor.fetchone()
+                
+                if not status_id:
+                    raise Exception("Status 'Mencari Pekerja Terdekat' not found in STATUS_PEMESANAN")
+                
+                # Update order status to indicate payment received
+                cursor.execute('''
+                    INSERT INTO TR_PEMESANAN_STATUS (
+                        idtrpemesanan, 
+                        idstatus, 
+                        tglwaktu
+                    ) VALUES (
+                        %s, %s, CURRENT_TIMESTAMP
+                    )
+                ''', [service_id, status_id[0]])
+
                 cursor.execute('COMMIT')
                 messages.success(request, f'Pembayaran berhasil. Saldo MyPay Anda sekarang Rp {new_balance:,.0f}')
 
             except Exception as e:
                 cursor.execute('ROLLBACK')
-                logger.error(f"Error in payment: {str(e)}")
+                logger.error(f"Error in payment process: {str(e)}")
+                logger.error(f"Service ID: {service_id}, Nominal: {nominal}")
                 messages.error(request, 'Gagal melakukan pembayaran')
 
             return redirect('mypay:show_mypay')
