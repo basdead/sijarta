@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.http import HttpResponseBadRequest
 from django.contrib import messages
 from utils.query import get_db_connection
 import logging
@@ -69,3 +70,116 @@ def show_mypay(request):
     finally:
         cursor.close()
         connection.close()
+
+def show_transaction_page(request):
+    # Debug: Print session info
+    logger.info(f"Session data: {request.session.items()}")
+    
+    if not request.session.get('is_authenticated'):
+        logger.warning('Unauthenticated user tried to access transactions page')
+        messages.error(request, 'Silakan login terlebih dahulu untuk mengakses halaman transaksi')
+        return redirect('main:login_user')
+    
+    user_id = request.session.get('user_id')
+    logger.info(f"User ID from session: {user_id}")
+    
+    if not user_id:
+        logger.error('No user_id in session for authenticated user')
+        messages.error(request, 'Sesi login tidak valid. Silakan login kembali')
+        return redirect('main:login_user')
+    
+    # Initialize default values
+    categories = []
+    user_type = None
+    pending_orders = []
+    
+    # Get user type from database
+    connection, cursor = get_db_connection()
+    if not connection or not cursor:
+        logger.error('Failed to connect to database')
+        messages.error(request, 'Gagal terhubung ke database')
+        return render(request, 'transactions.html', {'categories': categories, 'user_type': user_type})
+    
+    try:
+        # Check if user is in PELANGGAN table
+        cursor.execute('SELECT 1 FROM PELANGGAN WHERE id = %s', (user_id,))
+        is_pelanggan = cursor.fetchone() is not None
+        
+        # Check if user is in PEKERJA table
+        cursor.execute('SELECT 1 FROM PEKERJA WHERE id = %s', (user_id,))
+        is_pekerja = cursor.fetchone() is not None
+        
+        if is_pelanggan:
+            user_type = 'Pengguna'
+            logger.info('User identified as Pengguna')
+            categories = [
+                {'id': 'topup', 'nama': 'Top Up MyPay', 'disabled': False},
+                {'id': 'bayar_jasa', 'nama': 'Membayar Transaksi Jasa', 'disabled': False},
+                {'id': 'withdrawal', 'nama': 'Withdrawal MyPay ke Rekening Bank', 'disabled': False},
+                {'id': 'transfer', 'nama': 'Transfer MyPay ke Pengguna Lain', 'disabled': False}
+            ]
+            
+            # Fetch pending orders for the user
+            cursor.execute('''
+                SELECT pj.id, sj.namasubkategori, pj.sesi, pj.totalbiaya 
+                FROM TR_PEMESANAN_JASA pj
+                JOIN SUBKATEGORI_JASA sj ON pj.idkategorijasa = sj.id
+                JOIN TR_PEMESANAN_STATUS tps ON pj.id = tps.idtrpemesanan
+                JOIN STATUS_PEMESANAN sp ON tps.idstatus = sp.id
+                WHERE pj.idpelanggan = %s 
+                AND sp.status = 'Menunggu Pembayaran'
+                AND tps.tglwaktu = (
+                    SELECT MAX(tglwaktu)
+                    FROM TR_PEMESANAN_STATUS
+                    WHERE idtrpemesanan = pj.id
+                )
+                ORDER BY pj.id DESC
+            ''', [user_id])
+            
+            pending_orders = [
+                {
+                    'id': row[0],
+                    'subkategori': row[1],
+                    'sesi': f'Sesi {row[2]}',
+                    'totalharga': row[3]
+                }
+                for row in cursor.fetchall()
+            ]
+            logger.info(f'Fetched pending orders: {pending_orders}')
+            
+        elif is_pekerja:
+            user_type = 'Pekerja'
+            logger.info('User identified as Pekerja')
+            categories = [
+                {'id': 'topup', 'nama': 'Top Up MyPay', 'disabled': False},
+                {'id': 'withdrawal', 'nama': 'Withdrawal MyPay ke Rekening Bank', 'disabled': False},
+                {'id': 'transfer', 'nama': 'Transfer MyPay ke Pengguna Lain', 'disabled': False},
+                {'id': 'terima_honor', 'nama': 'Menerima Honor Transaksi Jasa', 'disabled': True}
+            ]
+        else:
+            logger.error(f'User {user_id} not found in either PELANGGAN or PEKERJA table')
+            messages.error(request, 'Tipe pengguna tidak valid')
+            
+        logger.info(f'Final categories: {categories}')
+            
+    except Exception as e:
+        logger.error(f'Error fetching user type and categories: {str(e)}')
+        messages.error(request, 'Terjadi kesalahan saat mengambil data')
+    finally:
+        cursor.close()
+        connection.close()
+    
+    context = {
+        'categories': categories,
+        'user_type': user_type,
+        'pending_orders': pending_orders
+    }
+    logger.info(f'Final context being sent to template: {context}')
+    return render(request, 'transactions.html', context)
+
+def update_transaction_form(request):
+    if request.method == 'POST':
+        category = request.POST.get('category')
+        context = {'selected_category': category}
+        return render(request, 'transaction_form_partial.html', context)
+    return HttpResponseBadRequest()
