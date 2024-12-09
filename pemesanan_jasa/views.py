@@ -165,9 +165,9 @@ def order_jasa(request, subcategory_name):
 
             # Initialize is_promo
             is_promo = False
-
-            # If discount code is provided, validate it
-            if kode_diskon:
+            
+            # Only validate discount if code is provided
+            if kode_diskon and kode_diskon.strip():
                 # First check if it's a PROMO
                 cursor.execute('''
                     SELECT 1
@@ -201,8 +201,36 @@ def order_jasa(request, subcategory_name):
                             'current_date': get_user_date(request)
                         })
 
+            # Parse tgl_pemesanan into datetime object if it's a string
+            if isinstance(tgl_pemesanan, str):
+                tgl_pemesanan = datetime.strptime(tgl_pemesanan, '%Y-%m-%d')
+            
+            # Format waktu_pekerjaan
+            waktu_pekerjaan = tgl_pemesanan.strftime('%Y-%m-%d 08:00:00')
+
             # Insert new order with the actual total_pembayaran
-            if is_promo:
+            if not kode_diskon or not kode_diskon.strip():
+                # No discount code provided, insert order without IdDiskon
+                cursor.execute('''
+                    INSERT INTO TR_PEMESANAN_JASA (
+                        TglPemesanan, TglPekerjaan, WaktuPekerjaan,
+                        TotalBiaya, IdPelanggan, IdKategoriJasa,
+                        Sesi, IdMetodeBayar
+                    ) VALUES (
+                        %s, %s, %s::timestamp, %s, %s, %s, %s, %s
+                    ) RETURNING Id;
+                ''', (
+                    tgl_pemesanan.strftime('%Y-%m-%d'),
+                    tgl_pemesanan.strftime('%Y-%m-%d'),  # Set TglPekerjaan to current date temporarily
+                    waktu_pekerjaan,  # Set WaktuPekerjaan to 8 AM
+                    session_price,  # Use original price since no discount
+                    user_id,
+                    subcategory_data[0],  # SubkategoriId
+                    sesi,
+                    metode_bayar
+                ))
+                new_order_id = cursor.fetchone()[0]
+            elif is_promo:
                 logger.info(f"Processing promo code: {kode_diskon}")
                 # For promos, we bypass the trigger by setting IdDiskon to NULL temporarily
                 cursor.execute('''
@@ -211,19 +239,18 @@ def order_jasa(request, subcategory_name):
                         TotalBiaya, IdPelanggan, IdKategoriJasa,
                         Sesi, IdDiskon, IdMetodeBayar
                     ) VALUES (
-                        %s, %s, %s, %s, %s, %s, %s, NULL, %s
+                        %s, %s, %s::timestamp, %s, %s, %s, %s, NULL, %s
                     ) RETURNING Id;
                 ''', (
-                    tgl_pemesanan,
-                    tgl_pemesanan,  # TglPekerjaan same as TglPemesanan for now
-                    datetime.now(),  # WaktuPekerjaan as current timestamp
+                    tgl_pemesanan.strftime('%Y-%m-%d'),
+                    tgl_pemesanan.strftime('%Y-%m-%d'),  # Set TglPekerjaan to current date temporarily
+                    waktu_pekerjaan,  # Set WaktuPekerjaan to 8 AM
                     total_pembayaran,  # Use the actual total after discount
                     user_id,
                     subcategory_data[0],  # SubkategoriId
                     sesi,
                     metode_bayar
-                ))
-                
+                ))                
                 # Get the ID of the inserted order
                 result = cursor.fetchone()
                 if result is None:
@@ -249,12 +276,12 @@ def order_jasa(request, subcategory_name):
                         TotalBiaya, IdPelanggan, IdKategoriJasa,
                         Sesi, IdDiskon, IdMetodeBayar
                     ) VALUES (
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s
+                        %s, %s, %s::timestamp, %s, %s, %s, %s, %s, %s
                     ) RETURNING Id
                 ''', (
-                    tgl_pemesanan,
-                    tgl_pemesanan,  # TglPekerjaan same as TglPemesanan for now
-                    datetime.now(),  # WaktuPekerjaan as current timestamp
+                    tgl_pemesanan.strftime('%Y-%m-%d'),
+                    tgl_pemesanan.strftime('%Y-%m-%d'),  # Set TglPekerjaan to current date temporarily
+                    waktu_pekerjaan,  # Set WaktuPekerjaan to 8 AM
                     total_pembayaran,  # Use the actual total after discount
                     user_id,
                     subcategory_data[0],  # SubkategoriId
@@ -512,7 +539,7 @@ def show_my_orders(request):
         
         orders = []
         for row in cursor.fetchall():
-            total_biaya = float(row[4]) if row[4] is not None else 0
+            total_biaya = float(row[4])
             original_harga = float(row[10]) if row[10] is not None else total_biaya
             
             # If total_biaya is less than original_harga, it means there's a discount
@@ -576,20 +603,37 @@ def cancel_order(request, order_id):
         # Convert order_id to string for PostgreSQL UUID comparison
         order_id_str = str(order_id)
         
-        # First verify that this order belongs to the current user
+        # Get order details including payment method and total amount
         cursor.execute('''
-            SELECT id FROM TR_PEMESANAN_JASA 
-            WHERE id::text = %s AND idpelanggan = %s
+            SELECT p.id, p.totalbiaya, mb.nama as metode_bayar
+            FROM TR_PEMESANAN_JASA p
+            JOIN METODE_BAYAR mb ON p.idmetodebayar = mb.id
+            WHERE p.id::text = %s AND p.idpelanggan = %s
         ''', (order_id_str, user_id))
         
-        if not cursor.fetchone():
+        order_details = cursor.fetchone()
+        if not order_details:
             messages.error(request, 'Order not found or unauthorized')
             return redirect('pemesanan_jasa:show_my_orders')
+
+        # Begin transaction
+        cursor.execute('BEGIN')
+        
+        # If payment was made with MyPay, refund the amount
+        if order_details[2] == 'MyPay':
+            total_biaya = float(order_details[1])
+            
+            # Update user's MyPay balance
+            cursor.execute('''
+                UPDATE "USER"
+                SET saldomypay = saldomypay + %s
+                WHERE id = %s
+            ''', (total_biaya, user_id))
 
         # Update the status in TR_PEMESANAN_STATUS
         current_time = timezone.now()
         
-        # First, get the ID of the "Pesanan Dibatalkan" status
+        # Get the ID of the "Pesanan Dibatalkan" status
         cursor.execute('''
             SELECT Id FROM STATUS_PEMESANAN 
             WHERE Status = 'Pesanan Dibatalkan'
@@ -615,7 +659,11 @@ def cancel_order(request, order_id):
         cursor.execute('''
             INSERT INTO TR_PEMESANAN_STATUS (IdTrPemesanan, IdStatus, TglWaktu)
             VALUES (%s, %s, %s)
-        ''', (order_id, status_id[0], current_time))
+        ''', (
+            order_id,
+            status_id[0],
+            current_time
+        ))
         
         connection.commit()
         messages.success(request, 'Order cancelled successfully')
@@ -623,7 +671,7 @@ def cancel_order(request, order_id):
     except Exception as e:
         logger.error(f"Error in cancel_order: {str(e)}")
         connection.rollback()
-        messages.error(request, 'An error occurred while canceling your order')
+        messages.error(request, 'An error occurred while canceling your order')    
     
     finally:
         cursor.close()
