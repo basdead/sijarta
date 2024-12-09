@@ -62,26 +62,79 @@ def profile(request, username):
 
         # Get additional info based on user type
         if viewed_user_type == 'pekerja':
+            # First get pekerja data
             cursor.execute(
-                'SELECT namabank, nomorrekening, npwp, LinkFoto, rating, jmlpesananselesai '
+                'SELECT namabank, nomorrekening, npwp, LinkFoto, rating '
                 'FROM PEKERJA WHERE id = %s', (profile_user_id,)
             )
             pekerja_data = cursor.fetchone()
+            
+            # Then calculate completed orders count
+            cursor.execute("""
+                SELECT COUNT(DISTINCT pj.Id)
+                FROM TR_PEMESANAN_JASA pj
+                JOIN TR_PEMESANAN_STATUS tps ON pj.Id = tps.IdTrPemesanan
+                JOIN STATUS_PEMESANAN sp ON tps.IdStatus = sp.Id
+                WHERE pj.IdPekerja = %s
+                AND sp.Status = 'Pesanan selesai'
+                AND tps.TglWaktu = (
+                    SELECT MAX(TglWaktu)
+                    FROM TR_PEMESANAN_STATUS
+                    WHERE IdTrPemesanan = pj.Id
+                )
+            """, [profile_user_id])
+            completed_orders = cursor.fetchone()[0]
+            
             if pekerja_data:
                 additional_attributes.update({
                     'nama_bank': pekerja_data[0],
                     'no_rekening': pekerja_data[1],
                     'npwp': pekerja_data[2],
                     'rating': pekerja_data[4],
-                    'jumlah_pesanan_selesai': pekerja_data[5]
+                    'jumlah_pesanan_selesai': completed_orders
                 })
                 profile_data['foto_url'] = pekerja_data[3]  # LinkFoto from PEKERJA table
                 form = PekerjaForm(initial=form_data)
         else:
-            cursor.execute('SELECT level FROM PELANGGAN WHERE id = %s', (profile_user_id,))
-            pelanggan_data = cursor.fetchone()
-            if pelanggan_data:
-                additional_attributes['level'] = pelanggan_data[0]
+            # Calculate level based on completed orders
+            cursor.execute("""
+                SELECT COUNT(DISTINCT pj.Id)
+                FROM TR_PEMESANAN_JASA pj
+                JOIN TR_PEMESANAN_STATUS tps ON pj.Id = tps.IdTrPemesanan
+                JOIN STATUS_PEMESANAN sp ON tps.IdStatus = sp.Id
+                WHERE pj.IdPelanggan = %s
+                AND sp.Status = 'Pesanan selesai'
+                AND tps.TglWaktu = (
+                    SELECT MAX(TglWaktu)
+                    FROM TR_PEMESANAN_STATUS
+                    WHERE IdTrPemesanan = pj.Id
+                )
+            """, [profile_user_id])
+            completed_orders = cursor.fetchone()[0]
+            
+            # Determine level based on completed orders
+            level = 'Basic'  # Default level
+            if completed_orders >= 15:
+                level = 'Diamond'
+            elif completed_orders >= 10:
+                level = 'Platinum'
+            elif completed_orders >= 8:
+                level = 'Gold'
+            elif completed_orders >= 5:
+                level = 'Silver'
+            elif completed_orders >= 1:
+                level = 'Bronze'
+            
+            # Update the level in the database and use it
+            cursor.execute("""
+                UPDATE PELANGGAN
+                SET level = %s
+                WHERE id = %s
+                RETURNING level
+            """, [level, profile_user_id])
+            connection.commit()
+            
+            additional_attributes['level'] = level
             form = PenggunaForm(initial=form_data)
 
         # Get navbar profile data - only for pekerja users

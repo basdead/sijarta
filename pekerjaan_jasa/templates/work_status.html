@@ -88,7 +88,9 @@
                                         <div class="detail-cell">Rp {{ order.price|floatformat:0|intcomma }}</div>
                                         <div class="detail-cell status-cell">{{ order.status }}</div>
                                         <div class="detail-cell button-row">
-                                            <button type="submit" class="table-button" onclick="updateStatus('{{ order.id }}')">Update</button>
+                                            {% if order.status != 'Pesanan selesai' %}
+                                                <button type="submit" class="table-button" onclick="updateStatus('{{ order.id }}')">Update</button>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>

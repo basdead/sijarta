@@ -99,8 +99,8 @@
                                     <div class="detail-cell button-row">
                                         {% if order.status == 'Menunggu Pembayaran' or order.status == 'Mencari Pekerja Terdekat' %}
                                             <button type="button" class="table-cancel-button" onclick="cancelOrder('{{ order.id }}')">Batalkan</button>
-                                        {% elif order.status == 'Pesanan Selesai' %}
-                                            <button type="submit" class="table-button">Buat Testimoni</button>
+                                        {% elif order.status == 'Pesanan selesai' %}
+                                            <button type="submit" class="table-button">Nilai Order</button>
                                         {% endif %}
                                     </div>
                                 </div>

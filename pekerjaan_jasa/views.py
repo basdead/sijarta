@@ -82,6 +82,14 @@ def show_my_works(request):
             # Fetch pending orders
             logger.info("Fetching pending orders...")
             cursor.execute("""
+                WITH LatestStatus AS (
+                    SELECT 
+                        IdTrPemesanan,
+                        IdStatus,
+                        TglWaktu,
+                        ROW_NUMBER() OVER (PARTITION BY IdTrPemesanan ORDER BY TglWaktu DESC) as rn
+                    FROM TR_PEMESANAN_STATUS
+                )
                 SELECT DISTINCT
                     pj.Id,
                     skj.NamaSubkategori,
@@ -100,8 +108,8 @@ def show_my_works(request):
                 JOIN SESI_LAYANAN sl ON sl.SubkategoriId = skj.Id AND sl.Sesi = pj.Sesi
                 JOIN "USER" u ON pj.IdPelanggan = u.Id
                 JOIN PEKERJA_KATEGORI_JASA pkj ON kj.Id = pkj.KategoriJasaId
-                JOIN TR_PEMESANAN_STATUS tps ON pj.Id = tps.IdTrPemesanan
-                JOIN STATUS_PEMESANAN sp ON tps.IdStatus = sp.Id
+                JOIN LatestStatus ls ON pj.Id = ls.IdTrPemesanan AND ls.rn = 1
+                JOIN STATUS_PEMESANAN sp ON ls.IdStatus = sp.Id
                 WHERE pkj.PekerjaId = %s
                 AND sp.Status = 'Mencari Pekerja Terdekat'
                 AND pj.IdPekerja IS NULL
@@ -466,11 +474,15 @@ def update_status(request):
         order_id = data.get('order_id')
         new_status = data.get('new_status')
 
-        if not order_id or not new_status:
+        logger.info(f"Updating status for order {order_id} to {new_status}")
+
+        if not all([order_id, new_status]):
+            logger.error("Missing required fields")
             return JsonResponse({'status': 'error', 'message': 'Missing required fields'})
 
         connection, cursor = get_db_connection()
-        if not connection or not cursor:
+        if connection is None or cursor is None:
+            logger.error("Database connection failed")
             return JsonResponse({'status': 'error', 'message': 'Database connection failed'})
 
         try:
@@ -481,17 +493,93 @@ def update_status(request):
             status_result = cursor.fetchone()
             
             if not status_result:
+                logger.error(f"Invalid status: {new_status}")
                 return JsonResponse({'status': 'error', 'message': 'Invalid status'})
             
-            status_id = status_result[0]
+            new_status_id = status_result[0]
+            logger.info(f"Found status ID: {new_status_id}")
             
             # Insert the new status
             cursor.execute("""
                 INSERT INTO TR_PEMESANAN_STATUS (IdTrPemesanan, IdStatus, TglWaktu)
                 VALUES (%s, %s, CURRENT_TIMESTAMP)
-            """, [order_id, status_id])
+            """, [order_id, new_status_id])
+            logger.info("Inserted new status")
+
+            # If status is "Pesanan selesai", increment the worker's completed orders count and update customer level
+            if new_status == 'Pesanan selesai':
+                logger.info(f"Order {order_id} is marked as completed")
+                
+                # Update worker's completed orders count
+                cursor.execute("""
+                    UPDATE PEKERJA p
+                    SET jmlpesananselesai = COALESCE(jmlpesananselesai, 0) + 1
+                    FROM TR_PEMESANAN_JASA pj
+                    WHERE p.Id = pj.IdPekerja AND pj.Id = %s
+                    RETURNING jmlpesananselesai
+                """, [order_id])
+                updated_count = cursor.fetchone()
+                logger.info(f"Updated worker's completed orders count to: {updated_count[0] if updated_count else 'no update'}")
+
+                # Get customer ID from order
+                cursor.execute("""
+                    SELECT IdPelanggan, IdPekerja
+                    FROM TR_PEMESANAN_JASA
+                    WHERE Id = %s
+                """, [order_id])
+                customer_result = cursor.fetchone()
+                
+                if customer_result:
+                    customer_id, worker_id = customer_result
+                    logger.info(f"Found customer ID: {customer_id}, worker ID: {worker_id}")
+                    
+                    # Count total completed orders for this customer
+                    cursor.execute("""
+                        SELECT COUNT(DISTINCT pj.Id)
+                        FROM TR_PEMESANAN_JASA pj
+                        JOIN TR_PEMESANAN_STATUS tps ON pj.Id = tps.IdTrPemesanan
+                        JOIN STATUS_PEMESANAN sp ON tps.IdStatus = sp.Id
+                        WHERE pj.IdPelanggan = %s
+                        AND sp.Status = 'Pesanan selesai'
+                        AND tps.TglWaktu = (
+                            SELECT MAX(TglWaktu)
+                            FROM TR_PEMESANAN_STATUS
+                            WHERE IdTrPemesanan = pj.Id
+                        )
+                    """, [customer_id])
+                    
+                    completed_orders = cursor.fetchone()[0]
+                    logger.info(f"Customer {customer_id} has {completed_orders} completed orders")
+                    
+                    # Determine new level based on completed orders
+                    new_level = 'Basic'  # Default level
+                    if completed_orders >= 15:
+                        new_level = 'Diamond'
+                    elif completed_orders >= 10:
+                        new_level = 'Platinum'
+                    elif completed_orders >= 8:
+                        new_level = 'Gold'
+                    elif completed_orders >= 5:
+                        new_level = 'Silver'
+                    elif completed_orders >= 1:
+                        new_level = 'Bronze'
+                    
+                    logger.info(f"Setting customer {customer_id} level to: {new_level} based on {completed_orders} orders")
+                    
+                    # Update customer's level
+                    cursor.execute("""
+                        UPDATE PELANGGAN
+                        SET level = %s
+                        WHERE Id = %s
+                        RETURNING level
+                    """, [new_level, customer_id])
+                    updated_level = cursor.fetchone()
+                    logger.info(f"Updated customer level. New level from database: {updated_level[0] if updated_level else 'no update'}")
+                else:
+                    logger.error(f"Could not find customer ID for order {order_id}")
             
             connection.commit()
+            logger.info("Successfully committed all changes")
             return JsonResponse({'status': 'success'})
             
         finally:
