@@ -82,6 +82,14 @@ def show_my_works(request):
             # Fetch pending orders
             logger.info("Fetching pending orders...")
             cursor.execute("""
+                WITH LatestStatus AS (
+                    SELECT 
+                        IdTrPemesanan,
+                        IdStatus,
+                        TglWaktu,
+                        ROW_NUMBER() OVER (PARTITION BY IdTrPemesanan ORDER BY TglWaktu DESC) as rn
+                    FROM TR_PEMESANAN_STATUS
+                )
                 SELECT DISTINCT
                     pj.Id,
                     skj.NamaSubkategori,
@@ -100,8 +108,8 @@ def show_my_works(request):
                 JOIN SESI_LAYANAN sl ON sl.SubkategoriId = skj.Id AND sl.Sesi = pj.Sesi
                 JOIN "USER" u ON pj.IdPelanggan = u.Id
                 JOIN PEKERJA_KATEGORI_JASA pkj ON kj.Id = pkj.KategoriJasaId
-                JOIN TR_PEMESANAN_STATUS tps ON pj.Id = tps.IdTrPemesanan
-                JOIN STATUS_PEMESANAN sp ON tps.IdStatus = sp.Id
+                JOIN LatestStatus ls ON pj.Id = ls.IdTrPemesanan AND ls.rn = 1
+                JOIN STATUS_PEMESANAN sp ON ls.IdStatus = sp.Id
                 WHERE pkj.PekerjaId = %s
                 AND sp.Status = 'Mencari Pekerja Terdekat'
                 AND pj.IdPekerja IS NULL
@@ -466,11 +474,11 @@ def update_status(request):
         order_id = data.get('order_id')
         new_status = data.get('new_status')
 
-        if not order_id or not new_status:
+        if not all([order_id, new_status]):
             return JsonResponse({'status': 'error', 'message': 'Missing required fields'})
 
         connection, cursor = get_db_connection()
-        if not connection or not cursor:
+        if connection is None or cursor is None:
             return JsonResponse({'status': 'error', 'message': 'Database connection failed'})
 
         try:
@@ -483,13 +491,22 @@ def update_status(request):
             if not status_result:
                 return JsonResponse({'status': 'error', 'message': 'Invalid status'})
             
-            status_id = status_result[0]
+            new_status_id = status_result[0]
             
             # Insert the new status
             cursor.execute("""
                 INSERT INTO TR_PEMESANAN_STATUS (IdTrPemesanan, IdStatus, TglWaktu)
                 VALUES (%s, %s, CURRENT_TIMESTAMP)
-            """, [order_id, status_id])
+            """, [order_id, new_status_id])
+
+            # If status is "Pesanan selesai", increment the worker's completed orders count
+            if new_status == 'Pesanan selesai':
+                cursor.execute("""
+                    UPDATE PEKERJA p
+                    SET jmlpesananselesai = COALESCE(jmlpesananselesai, 0) + 1
+                    FROM TR_PEMESANAN_JASA pj
+                    WHERE p.Id = pj.IdPekerja AND pj.Id = %s
+                """, [order_id])
             
             connection.commit()
             return JsonResponse({'status': 'success'})
