@@ -78,7 +78,7 @@
                         {% if orders %}
                         <div class="order-items">
                             {% for order in orders %}
-                            <div class="order-item" onclick="" style="cursor: pointer;">
+                            <div class="order-item" onclick="" style="cursor: pointer;" data-order-id="{{ order.id }}">
                                 <div class="order-details">
                                     <div class="detail-cell">{{ order.subkategori_jasa.nama }}</div>
                                     <div class="detail-cell">{{ order.sesi_layanan }}</div>
@@ -95,13 +95,10 @@
                                         {% endif %}
                                     </div>
                                     <div class="detail-cell">{{ order.pekerja.nama }}</div>
-                                    <div class="detail-cell">{{ order.status }}</div>
+                                    <div class="detail-cell status-cell">{{ order.status }}</div>
                                     <div class="detail-cell button-row">
                                         {% if order.status == 'Menunggu Pembayaran' or order.status == 'Mencari Pekerja Terdekat' %}
-                                            <form action="{% url 'pemesanan_jasa:cancel_order' order.id %}" method="POST" style="display: inline;">
-                                                {% csrf_token %}
-                                                <button type="submit" class="table-cancel-button" onclick="return confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')">Batalkan</button>
-                                            </form>
+                                            <button type="button" class="table-cancel-button" onclick="cancelOrder('{{ order.id }}')">Batalkan</button>
                                         {% elif order.status == 'Pesanan Selesai' %}
                                             <button type="submit" class="table-button">Buat Testimoni</button>
                                         {% endif %}
@@ -412,6 +409,13 @@
         color: #9b4747;
         font-weight: bold;
     }
+
+    .status-cell {
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 </style>
 
 <script>
@@ -503,6 +507,56 @@
 
     // Search in real-time as user types
     searchInput.addEventListener('input', performSearch);
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function cancelOrder(orderId) {
+        if (confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')) {
+            const csrftoken = getCookie('csrftoken');
+            
+            fetch('{% url "pemesanan_jasa:cancel_order" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                },
+                body: JSON.stringify({
+                    order_id: orderId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Remove the cancelled order from the list
+                    const orderElement = document.querySelector(`[data-order-id="${orderId}"]`);
+                    if (orderElement) {
+                        orderElement.remove();
+                    }
+                    // Refresh the page to show updated status
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Failed to cancel order');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while cancelling the order');
+            });
+        }
+    }
 </script>
 
 {% endblock %}

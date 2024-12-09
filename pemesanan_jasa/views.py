@@ -11,6 +11,7 @@ from django.contrib import messages
 from datetime import timedelta
 from django.views.decorators.http import require_http_methods
 import uuid
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -311,7 +312,9 @@ def order_jasa(request, subcategory_name):
             # Insert into TR_PEMESANAN_STATUS
             cursor.execute('''
                 INSERT INTO TR_PEMESANAN_STATUS (
-                    IdTrPemesanan, IdStatus, TglWaktu
+                    IdTrPemesanan,
+                    IdStatus,
+                    TglWaktu
                 ) VALUES (
                     %s, %s, %s
                 )
@@ -577,104 +580,47 @@ def show_my_orders(request):
 
 
 @require_http_methods(["POST"])
-def cancel_order(request, order_id):
-    """
-    View for canceling an order
-    """
-    # Check authentication
-    is_authenticated = request.session.get('is_authenticated', False)
-    user_type = request.session.get('user_type', None)
-    user_id = request.session.get('user_id', None)
-    
-    if not is_authenticated or not user_type or not user_id:
-        messages.error(request, 'Please log in to continue')
-        return redirect('main:login_user')
-    
-    if user_type != 'pelanggan':
-        messages.error(request, 'Only customers can cancel orders')
-        return redirect('main:show_home_page')
-
-    connection, cursor = get_db_connection()
-    if connection is None or cursor is None:
-        messages.error(request, 'Database connection failed')
-        return redirect('main:show_home_page')
-
+def cancel_order(request):
     try:
-        # Convert order_id to string for PostgreSQL UUID comparison
-        order_id_str = str(order_id)
-        
-        # Get order details including payment method and total amount
-        cursor.execute('''
-            SELECT p.id, p.totalbiaya, mb.nama as metode_bayar
-            FROM TR_PEMESANAN_JASA p
-            JOIN METODE_BAYAR mb ON p.idmetodebayar = mb.id
-            WHERE p.id::text = %s AND p.idpelanggan = %s
-        ''', (order_id_str, user_id))
-        
-        order_details = cursor.fetchone()
-        if not order_details:
-            messages.error(request, 'Order not found or unauthorized')
-            return redirect('pemesanan_jasa:show_my_orders')
+        data = json.loads(request.body)
+        order_id = data.get('order_id')
 
-        # Begin transaction
-        cursor.execute('BEGIN')
-        
-        # If payment was made with MyPay, refund the amount
-        if order_details[2] == 'MyPay':
-            total_biaya = float(order_details[1])
+        if not order_id:
+            return JsonResponse({'status': 'error', 'message': 'Missing order ID'})
+
+        connection, cursor = get_db_connection()
+        if not connection or not cursor:
+            return JsonResponse({'status': 'error', 'message': 'Database connection failed'})
             
-            # Update user's MyPay balance
-            cursor.execute('''
-                UPDATE "USER"
-                SET saldomypay = saldomypay + %s
-                WHERE id = %s
-            ''', (total_biaya, user_id))
-
-        # Update the status in TR_PEMESANAN_STATUS
-        current_time = timezone.now()
-        
-        # Get the ID of the "Pesanan Dibatalkan" status
-        cursor.execute('''
-            SELECT Id FROM STATUS_PEMESANAN 
-            WHERE Status = 'Pesanan Dibatalkan'
-        ''')
-        status_id = cursor.fetchone()
-        
-        if not status_id:
-            # If status doesn't exist, create it
-            cursor.execute('''
-                INSERT INTO STATUS_PEMESANAN (Status)
-                VALUES ('Pesanan Dibatalkan')
-                RETURNING Id
-            ''')
-            status_id = cursor.fetchone()
-
-        # Delete any existing status for this order
-        cursor.execute('''
-            DELETE FROM TR_PEMESANAN_STATUS
-            WHERE IdTrPemesanan = %s
-        ''', (order_id,))
-        
-        # Insert the new cancelled status
-        cursor.execute('''
-            INSERT INTO TR_PEMESANAN_STATUS (IdTrPemesanan, IdStatus, TglWaktu)
-            VALUES (%s, %s, %s)
-        ''', (
-            order_id,
-            status_id[0],
-            current_time
-        ))
-        
-        connection.commit()
-        messages.success(request, 'Order cancelled successfully')
-
+        try:
+            # Get the status ID for "Pesanan Dibatalkan" (note the capital D)
+            cursor.execute("""
+                SELECT Id FROM STATUS_PEMESANAN WHERE Status = 'Pesanan Dibatalkan'
+            """)
+            status_result = cursor.fetchone()
+            
+            if not status_result:
+                # Log the available statuses for debugging
+                cursor.execute("SELECT Status FROM STATUS_PEMESANAN")
+                available_statuses = [row[0] for row in cursor.fetchall()]
+                logger.error(f"Available statuses: {available_statuses}")
+                return JsonResponse({'status': 'error', 'message': 'Cancel status not found'})
+            
+            cancel_status_id = status_result[0]
+            
+            # Insert the cancel status - this will trigger the refund_mypay_on_cancel trigger
+            cursor.execute("""
+                INSERT INTO TR_PEMESANAN_STATUS (IdTrPemesanan, IdStatus, TglWaktu)
+                VALUES (%s, %s, CURRENT_TIMESTAMP)
+            """, [order_id, cancel_status_id])
+            
+            connection.commit()
+            return JsonResponse({'status': 'success'})
+            
+        finally:
+            cursor.close()
+            connection.close()
+            
     except Exception as e:
-        logger.error(f"Error in cancel_order: {str(e)}")
-        connection.rollback()
-        messages.error(request, 'An error occurred while canceling your order')    
-    
-    finally:
-        cursor.close()
-        connection.close()
-    
-    return redirect('pemesanan_jasa:show_my_orders')
+        logger.error(f"Error cancelling order: {str(e)}")
+        return JsonResponse({'status': 'error', 'message': str(e)})
