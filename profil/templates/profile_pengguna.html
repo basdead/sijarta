@@ -100,6 +100,7 @@
                                    value="{{ form.alamat.value|default:'' }}">
                         </div>
 
+                        {% if request.session.user_type == 'pekerja' %}
                         <div class="form-group mb-3">
                             <label for="{{ form.foto_url.id_for_label }}">URL Foto</label>
                             <input type="text" 
@@ -109,7 +110,8 @@
                                    class="w-100"
                                    value="{{ form.foto_url.value|default:'' }}">
                         </div>
-                        
+                        {% endif %}
+
                         <!-- Add other fields similarly, excluding the password field -->
 
                         <!-- HTML button -->
