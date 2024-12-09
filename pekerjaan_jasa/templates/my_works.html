@@ -6,6 +6,10 @@
 {% block content %}
 {% include 'navbar.html' %}
 
+<head>
+    <script src="{% static 'js/my_works.js' %}"></script>
+</head>
+
 <div class="my-works-content">
     <div class="navigation">
         <div class="navigation-buttons">
@@ -20,14 +24,91 @@
             </div>
             <button class="navigation-button">
                 <div class="order horizontal-stack-info" style="color: #667a7b;">
-                    <img src="https://www.svgrepo.com/show/485912/suitcase1.svg" alt="Works" style="width: 20px; height: 20px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
+                    <img src="https://www.svgrepo.com/show/485912/suitcase1.svg" alt="Works" style="width: 15px; height: 15px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
                     <span>Pekerjaan Saya</span>
                 </div>
             </button>
         </div>
     </div>
-</div>
 
+    <div class="my-works-container">
+        <div class="my-works-container-content">
+            <div class="my-works-area">
+                <div class="filters">
+                    <div class="dropdown" style="width: 100%;">
+                        <select name="category"
+                                id="category-dropdown"
+                                class="dropdown-content horizontal-stack-info" 
+                                style="width: 100%; display: flex; justify-content: center; align-items: center; border-radius: 2rem; background-color: #cdddde; outline: none; box-shadow: none; appearance: none; padding: 0px 5px 0px 5px; background-image: url('https://www.svgrepo.com/show/522029/chevron-down.svg'); background-repeat: no-repeat; background-position: right 10px center; background-size: 20px;">
+                            <option value="">Kategori</option>
+                            {% for category in categories %}    
+                                <option value="{{ category.id }}">{{ category.nama_kategori }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="dropdown" style="width: 100%;">
+                        <select name="subcategory"
+                            id="subcategory-dropdown"
+                            class="dropdown-content horizontal-stack-info" 
+                            style="width: 100%; display: flex; justify-content: center; align-items: center; border-radius: 2rem; background-color: #cdddde; outline: none; box-shadow: none; appearance: none; padding: 0px 5px 0px 5px; background-image: url('https://www.svgrepo.com/show/522029/chevron-down.svg'); background-repeat: no-repeat; background-position: right 10px center; background-size: 20px;">
+                            <option value="">Subkategori</option>
+                            {% for category in categories %}
+                                {% for subcategory in category.subcategories %}
+                                    <option value="{{ subcategory.id }}" data-category-id="{{ category.id }}" class="subcategory-option">{{ subcategory.nama_subkategori }}</option>
+                                {% endfor %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="the-search-bar" style="width: 100%;">
+                        <div class="search-content horizontal-stack-info">
+                            <img src="https://www.svgrepo.com/show/479638/search-2.svg" alt="Search" class="search-icon" style="width: 18px; height: 18px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
+                            <input type="text" id="search-input" placeholder="Cari" class="w-100 search-input" style="border: none; background: none; outline: none;">
+                        </div>
+                    </div>
+                </div>
+                <div class="works-table">
+                    <div class="works-table-header">
+                        <div class="works-table-header-contents">
+                            <div class="header-cell"><strong class="order-header-labels">Subkategori</strong></div>
+                            <div class="header-cell"><strong class="order-header-labels">sesi</strong></div>
+                            <div class="header-cell"><strong class="order-header-labels">Tanggal Pesanan</strong></div>
+                            <div class="header-cell"><strong class="order-header-labels">Nama Pelanggan</strong></div>
+                            <div class="header-cell"><strong class="order-header-labels">Harga</strong></div>
+                            <div class="header-cell"><strong class="order-header-labels">Aksi</strong></div>
+                        </div>
+                    </div>
+                    <div class="works-table-content">
+                        {% if orders %}
+                        <div class="works-items">
+                            {% for order in orders %}
+                                <div class="works-item" data-order-id="{{ order.id }}"
+                                     data-category-id="{{ order.category_id }}" 
+                                     data-subcategory-id="{{ order.subcategory_id }}"
+                                     data-debug="Category: {{ order.category_id }}, Subcategory: {{ order.subcategory_id }}">
+                                    <div class="works-details">
+                                        <div class="detail-cell">{{ order.subcategory }}</div>
+                                        <div class="detail-cell">{{ order.session }}</div>
+                                        <div class="detail-cell">{{ order.date }}</div>
+                                        <div class="detail-cell">{{ order.customer_name }}</div>
+                                        <div class="detail-cell">Rp {{ order.price|floatformat:0|intcomma }}</div>
+                                        <div class="detail-cell button-row">
+                                            <button type="button" class="table-button" onclick="acceptWork('{{ order.id }}')">Kerjakan</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="no-works">
+                            Tidak ada pekerjaan yang tersedia
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
     :root {
@@ -59,8 +140,387 @@
         width: 100%;  /* Added */
     }
 
-</style>
-<script>
+    .navigation-buttons {
+        display: flex;
+        margin-bottom: 20px;
+    }
 
+    .navigation-button {
+        padding: 0.3rem 0.8rem;
+        border-radius: 2rem;
+        background-color: #e9f0f1;
+        width: fit-content;
+        display: flex;
+        flex-direction: row;
+        border: none;
+    }
+
+    .horizontal-stack-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .my-works-container-content {
+        padding: 20px;
+        width: 100%;  /* Added */
+    }
+
+    .my-works-area {
+        width: 100%;
+        padding: 30px;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .filters {
+        display: flex;
+        flex-direction: row;
+        gap: 1rem;
+        width: 100%;
+    }
+
+    .dropdown {
+        width: 100%;
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        display: flex;
+        flex-direction: row;
+        background-color: #cdddde;
+    }
+
+    .dropdown-content {
+        display: flex;
+        align-items: center;
+        position: relative;
+    }
+
+    select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background: none;
+        padding-right: 18px; /* Space for custom chevron */
+        border: none;
+    }
+
+    select:focus {
+        outline: none;
+        box-shadow: none;
+    }
+
+    .the-search-bar {
+        width: 100%;
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        display: flex;
+        flex-direction: row;
+        background-color: #e9f0f1;
+    }
+
+    .search-content {
+        display: flex;
+        align-items: center;
+    }
+
+    .search-content input {
+        font-family: inherit;
+        font-size: inherit;
+    }
+
+    .search-content input::placeholder {
+        color: var(--placeholder-color);
+    }
+
+    .works-table {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .works-table-header {
+        padding: 10px 20px;
+        margin-bottom: 0;
+        background-color: #177E89;
+        color: white;
+        border-radius: 0.5rem 0.5rem 0 0;
+        font-size: 16px;
+        width: 100%;
+        transition: border-radius 0.3s ease;
+    }
+
+    .works-table-header-contents {
+        padding: 5px 25px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .header-cell {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .works-header-labels {
+        color: white;
+    }
+
+    .works-table-content {
+        padding: 20px;
+        margin-bottom: 0;
+        background-color: #cdddde;
+        border-radius: 0 0 0.5rem 0.5rem;
+        font-size: 16px;
+        width: 100%;
+        display: block;
+        transition: all 0.3s ease;
+    }
+
+    .works-items {
+        width: 100%;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .works-item {
+        padding: 15px;
+        transition: background-color 0.2s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .works-item:hover {
+        background-color: #e9ecef;
+        border-radius: 0.3rem;
+    }
+
+    .works-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        width: 100%;
+    }
+
+    .detail-cell {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .action-button {
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    .action-button:hover {
+        background-color: #45a049;
+    }
+
+    .no-works {
+        width: 100%;
+        text-align: center;
+        padding: 20px;
+        color: #666;
+    }
+
+    .button-row {
+        display: flex;
+        justify-content: center;
+    }
+
+    .table-button {
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        background-color: #177E89;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 1.1rem;
+    }
+
+    .table-button:hover {
+        background-color: #084c61;
+    }
+
+    .table-cancel-button {
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        background-color: #9b4747;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 1.1rem;
+    }
+
+    .table-cancel-button:hover {
+        background-color: #a11f1f;
+    }
+
+</style>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function acceptWork(orderId) {
+        const csrftoken = getCookie('csrftoken');
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const waktuPekerjaan = `${hours}:${minutes}`;
+        const day = now.getDate().toString().padStart(2, '0');
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const year = now.getFullYear();
+        const tanggalPekerjaan = `${day}/${month}/${year}`;
+        
+        fetch('{% url "pekerjaan_jasa:accept_work" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+            },
+            body: JSON.stringify({
+                order_id: orderId,
+                waktu_pekerjaan: waktuPekerjaan,
+                tanggal_pekerjaan: tanggalPekerjaan
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Remove the accepted order from the list
+                const orderElement = document.querySelector(`[data-order-id="${orderId}"]`);
+                if (orderElement) {
+                    orderElement.remove();
+                }
+                // Refresh the page to show updated status
+                window.location.reload();
+            } else {
+                alert(data.message || 'Failed to accept work');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while accepting the work');
+        });
+    }
+
+    // Get references to the dropdowns
+    const categoryDropdown = document.getElementById('category-dropdown');
+    const subcategoryDropdown = document.getElementById('subcategory-dropdown');
+    const searchInput = document.getElementById('search-input');
+
+    // Function to update subcategory dropdown based on selected category
+    function updateSubcategoryDropdown() {
+        const selectedCategoryId = categoryDropdown.value;
+        const subcategoryOptions = document.querySelectorAll('#subcategory-dropdown option');
+        
+        // First, hide all subcategory options except the default one
+        subcategoryOptions.forEach(option => {
+            if (option.value === '') {
+                option.style.display = '';  // Show default option
+            } else {
+                option.style.display = 'none';  // Hide all other options initially
+            }
+        });
+
+        // If a category is selected, show its subcategories
+        if (selectedCategoryId) {
+            subcategoryOptions.forEach(option => {
+                if (option.getAttribute('data-category-id') === selectedCategoryId) {
+                    option.style.display = '';
+                }
+            });
+        }
+
+        // Reset subcategory selection to default
+        subcategoryDropdown.value = '';
+    }
+
+    // Function to filter orders based on selections
+    function filterOrders() {
+        const selectedCategoryId = categoryDropdown.value;
+        const selectedSubcategoryId = subcategoryDropdown.value;
+        const searchText = searchInput.value.toLowerCase();
+        
+        // Get all order items
+        const orderItems = document.querySelectorAll('.works-item');
+        
+        orderItems.forEach(item => {
+            let shouldShow = true;
+            
+            // Filter by category if selected
+            if (selectedCategoryId && item.getAttribute('data-category-id') !== selectedCategoryId) {
+                shouldShow = false;
+            }
+            
+            // Filter by subcategory if selected
+            if (shouldShow && selectedSubcategoryId && item.getAttribute('data-subcategory-id') !== selectedSubcategoryId) {
+                shouldShow = false;
+            }
+            
+            // Filter by search text
+            if (shouldShow && searchText) {
+                const orderText = item.textContent.toLowerCase();
+                if (!orderText.includes(searchText)) {
+                    shouldShow = false;
+                }
+            }
+            
+            // Show or hide the item
+            item.style.display = shouldShow ? '' : 'none';
+        });
+
+        // Show "no orders" message if all items are hidden
+        const noOrdersMessage = document.querySelector('.no-works');
+        if (noOrdersMessage) {
+            const visibleOrders = Array.from(orderItems).some(item => item.style.display !== 'none');
+            noOrdersMessage.style.display = visibleOrders ? 'none' : 'block';
+        }
+    }
+
+    // Event listeners
+    categoryDropdown.addEventListener('change', function() {
+        updateSubcategoryDropdown();
+        filterOrders();
+    });
+    
+    subcategoryDropdown.addEventListener('change', filterOrders);
+    searchInput.addEventListener('input', filterOrders);
+
+    // Initialize the subcategory dropdown
+    updateSubcategoryDropdown();
 </script>
+
 {% endblock %}

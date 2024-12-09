@@ -20,14 +20,91 @@
             </div>
             <button class="navigation-button">
                 <div class="order horizontal-stack-info" style="color: #667a7b;">
-                    <img src="https://www.svgrepo.com/show/485912/suitcase1.svg" alt="Works" style="width: 20px; height: 20px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
-                    <span>Pekerjaan Saya</span>
+                    <img src="https://www.svgrepo.com/show/485912/suitcase1.svg" alt="Works" style="width: 15px; height: 15px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
+                    <span>Status Pekerjaan</span>
                 </div>
             </button>
         </div>
     </div>
-</div>
 
+    <div class="work-status-container">
+        <div class="work-status-container-content">
+            <div class="work-status-area">
+                <div class="filters">
+                    <div class="dropdown" style="width: 100%;">
+                        <select name="category"
+                                id="category-dropdown"
+                                class="dropdown-content horizontal-stack-info" 
+                                style="width: 100%; display: flex; justify-content: center; align-items: center; border-radius: 2rem; background-color: #cdddde; outline: none; box-shadow: none; appearance: none; padding: 0px 5px 0px 5px; background-image: url('https://www.svgrepo.com/show/522029/chevron-down.svg'); background-repeat: no-repeat; background-position: right 10px center; background-size: 20px;">
+                            <option value="">Kategori</option>
+                            {% for category in categories %}    
+                                <option value="{{ category.id }}">{{ category.nama_kategori }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="dropdown" style="width: 100%;">
+                        <select name="status"
+                            id="status-dropdown"
+                            class="dropdown-content horizontal-stack-info" 
+                            style="width: 100%; display: flex; justify-content: center; align-items: center; border-radius: 2rem; background-color: #cdddde; outline: none; box-shadow: none; appearance: none; padding: 0px 5px 0px 5px; background-image: url('https://www.svgrepo.com/show/522029/chevron-down.svg'); background-repeat: no-repeat; background-position: right 10px center; background-size: 20px;">
+                            <option value="">Status Pesanan</option>
+                            {% for status in all_statuses %}
+                                <option value="{{ status.id }}">{{ status.status }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="the-search-bar" style="width: 100%;">
+                        <div class="search-content horizontal-stack-info">
+                            <img src="https://www.svgrepo.com/show/479638/search-2.svg" alt="Search" class="search-icon" style="width: 18px; height: 18px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
+                            <input type="text" id="search-input" placeholder="Cari" class="w-100 search-input" style="border: none; background: none; outline: none;">
+                        </div>
+                    </div>
+                </div>
+                <div class="status-table">
+                    <div class="status-table-header">
+                        <div class="status-table-header-contents">
+                            <div class="header-cell"><strong class="order-header-labels">Subkategori</strong></div>
+                            <div class="header-cell"><strong class="order-header-labels">Sesi</strong></div>
+                            <div class="header-cell"><strong class="order-header-labels">Tgl/Waktu</strong></div>
+                            <div class="header-cell"><strong class="order-header-labels">Nama Pelanggan</strong></div>
+                            <div class="header-cell"><strong class="order-header-labels">Harga</strong></div>
+                            <div class="header-cell"><strong class="order-header-labels">Status Pesanan</strong></div>
+                            <div class="header-cell"><strong class="order-header-labels">Update Status</strong></div>
+                        </div>
+                    </div>
+                    <div class="status-table-content">
+                        {% if orders %}
+                        <div class="status-items">
+                            {% for order in orders %}
+                                <div class="status-item" 
+                                     data-category-id="{{ order.category_id }}" 
+                                     data-subcategory-id="{{ order.subcategory_id }}"
+                                     data-debug="Category: {{ order.category_id }}, Subcategory: {{ order.subcategory_id }}">
+                                    <div class="status-details">
+                                        <div class="detail-cell">{{ order.subcategory }}</div>
+                                        <div class="detail-cell">{{ order.session }}</div>
+                                        <div class="detail-cell date-cell">{{ order.date }}</div>
+                                        <div class="detail-cell">{{ order.customer_name }}</div>
+                                        <div class="detail-cell">Rp {{ order.price|floatformat:0|intcomma }}</div>
+                                        <div class="detail-cell status-cell">{{ order.status }}</div>
+                                        <div class="detail-cell button-row">
+                                            <button type="submit" class="table-button" onclick="updateStatus('{{ order.id }}')">Update</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="no-works">
+                            Tidak ada pekerjaan yang sedang berjalan
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
     :root {
@@ -59,8 +136,323 @@
         width: 100%;  /* Added */
     }
 
+    .navigation-buttons {
+        display: flex;
+        margin-bottom: 20px;
+    }
+
+    .navigation-button {
+        padding: 0.3rem 0.8rem;
+        border-radius: 2rem;
+        background-color: #e9f0f1;
+        width: fit-content;
+        display: flex;
+        flex-direction: row;
+        border: none;
+    }
+
+    .horizontal-stack-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .work-status-container-content {
+        padding: 20px;
+        width: 100%;  /* Added */
+    }
+
+    .work-status-area {
+        width: 100%;
+        padding: 30px;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .filters {
+        display: flex;
+        flex-direction: row;
+        gap: 1rem;
+        width: 100%;
+    }
+
+    .dropdown {
+        width: 100%;
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        display: flex;
+        flex-direction: row;
+        background-color: #cdddde;
+    }
+
+    .dropdown-content {
+        display: flex;
+        align-items: center;
+        position: relative;
+    }
+
+    select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background: none;
+        padding-right: 18px; /* Space for custom chevron */
+        border: none;
+    }
+
+    select:focus {
+        outline: none;
+        box-shadow: none;
+    }
+
+    .the-search-bar {
+        width: 100%;
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        display: flex;
+        flex-direction: row;
+        background-color: #e9f0f1;
+    }
+
+    .search-content {
+        display: flex;
+        align-items: center;
+    }
+
+    .search-content input {
+        font-family: inherit;
+        font-size: inherit;
+    }
+
+    .search-content input::placeholder {
+        color: var(--placeholder-color);
+    }
+
+    .status-table {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .status-table-header {
+        padding: 10px 20px;
+        margin-bottom: 0;
+        background-color: #177E89;
+        color: white;
+        border-radius: 0.5rem 0.5rem 0 0;
+        font-size: 16px;
+        width: 100%;
+        transition: border-radius 0.3s ease;
+    }
+
+    .status-table-header-contents {
+        padding: 5px 25px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .header-cell {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .status-header-labels {
+        color: white;
+    }
+
+    .status-table-content {
+        padding: 20px;
+        margin-bottom: 0;
+        background-color: #cdddde;
+        border-radius: 0 0 0.5rem 0.5rem;
+        font-size: 16px;
+        width: 100%;
+        display: block;
+        transition: all 0.3s ease;
+    }
+
+    .status-items {
+        width: 100%;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .status-item {
+        padding: 15px;
+        transition: background-color 0.2s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .status-item:hover {
+        background-color: #e9ecef;
+        border-radius: 0.3rem;
+    }
+
+    .status-details {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        width: 100%;
+    }
+
+    .detail-cell {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .date-cell {
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .action-button {
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    .action-button:hover {
+        background-color: #45a049;
+    }
+
+    .no-works {
+        width: 100%;
+        text-align: center;
+        padding: 20px;
+        color: #666;
+    }
+
+    .button-row {
+        display: flex;
+        justify-content: center;
+    }
+
+    .table-button {
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        background-color: #177E89;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 1.1rem;
+    }
+
+    .table-button:hover {
+        background-color: #084c61;
+    }
+
+    .table-cancel-button {
+        padding: 0.6rem 1.2rem;
+        border-radius: 2rem;
+        background-color: #9b4747;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 1.1rem;
+    }
+
+    .table-cancel-button:hover {
+        background-color: #a11f1f;
+    }
+
+    .status-cell {
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
 </style>
 <script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Get references to the dropdowns
+    const categoryDropdown = document.getElementById('category-dropdown');
+    const statusDropdown = document.getElementById('status-dropdown');
+    const searchInput = document.getElementById('search-input');
+
+    // Function to filter orders based on selections
+    function filterOrders() {
+        const selectedCategoryId = categoryDropdown.value;
+        const selectedStatusId = statusDropdown.value;
+        const searchText = searchInput.value.toLowerCase();
+        
+        // Get all order items
+        const orderItems = document.querySelectorAll('.status-item');
+        
+        orderItems.forEach(item => {
+            let shouldShow = true;
+            
+            // Filter by category if selected
+            if (selectedCategoryId && item.getAttribute('data-category-id') !== selectedCategoryId) {
+                shouldShow = false;
+            }
+            
+            // Filter by status if selected
+            if (shouldShow && selectedStatusId && item.querySelector('.detail-cell:nth-child(6)').textContent !== selectedStatusId) {
+                shouldShow = false;
+            }
+            
+            // Filter by search text
+            if (shouldShow && searchText) {
+                const orderText = item.textContent.toLowerCase();
+                if (!orderText.includes(searchText)) {
+                    shouldShow = false;
+                }
+            }
+            
+            // Show or hide the item
+            item.style.display = shouldShow ? '' : 'none';
+        });
+
+        // Show "no orders" message if all items are hidden
+        const noOrdersMessage = document.querySelector('.no-works');
+        if (noOrdersMessage) {
+            const visibleOrders = Array.from(orderItems).some(item => item.style.display !== 'none');
+            noOrdersMessage.style.display = visibleOrders ? 'none' : 'block';
+        }
+    }
+
+    // Event listeners
+    categoryDropdown.addEventListener('change', filterOrders);
+    statusDropdown.addEventListener('change', filterOrders);
+    searchInput.addEventListener('input', filterOrders);
 
 </script>
 {% endblock %}
