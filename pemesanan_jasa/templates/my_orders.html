@@ -100,7 +100,7 @@
                                         {% if order.status == 'Menunggu Pembayaran' or order.status == 'Mencari Pekerja Terdekat' %}
                                             <button type="button" class="table-cancel-button" onclick="cancelOrder('{{ order.id }}')">Batalkan</button>
                                         {% elif order.status == 'Pesanan selesai' %}
-                                            <button type="submit" class="table-button">Nilai Order</button>
+                                            <a href="{% url 'pemesanan_jasa:review_order' order.id %}" class="table-button" style="text-decoration: none;">Nilai Order</a>
                                         {% endif %}
                                     </div>
                                 </div>

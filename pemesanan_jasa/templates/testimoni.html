@@ -2,10 +2,11 @@
 {% load static %}
 {% load humanize %}
 {% load currency_format %}
-{% block title %}Beli Voucher{% endblock %}
+{% block title %}Testimoni{% endblock %}
 {% block content %}
 {% include 'navbar.html' %}
-<div class="pemesanan-content">
+
+<div class="review-content">
     <div class="navigation">
         <div class="navigation-buttons">
             <button onclick="window.location.href='{% url 'main:show_home_page' %}'" class="navigation-button">
@@ -17,57 +18,64 @@
             <div class="path">
                 <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
             </div>
-            <button onclick="window.location.href='{% url 'diskon:show_discount_page' %}'" class="navigation-button">
-                <div class="diskon horizontal-stack-info">
-                    <img src="https://www.svgrepo.com/show/219502/discount.svg" alt="Diskon" style="margin-top: 1px; width: 15px; height: 15px;">
-                    <span>Diskon</span>
+            <button onclick="window.location.href='{% url 'pemesanan_jasa:show_my_orders' %}'" class="navigation-button">
+                <div class="order horizontal-stack-info">
+                    <img src="https://www.svgrepo.com/show/458003/order.svg" alt="Orders" style="width: 20px; height: 20px;">
+                    <span>Pesanan Saya</span>
                 </div>
             </button>
             <div class="path">
                 <img src="https://www.svgrepo.com/show/521479/arrow-next-small.svg" alt="Arrow Next" style="width: 30px; height: 30px; padding-top:0.2rem; filter: invert(88%) sepia(6%) saturate(0%) hue-rotate(180deg) brightness(97%) contrast(87%);">
             </div>
             <button class="navigation-button">
-                <div class="diskon horizontal-stack-info" style="color: #667a7b;">
-                    <img src="https://www.svgrepo.com/show/219502/discount.svg" alt="Diskon" style="margin-top: 1px; width: 15px; height: 15px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
-                    <span>Beli Voucher</span>
+                <div class="order horizontal-stack-info" style="color: #667a7b;">
+                    <img src="https://www.svgrepo.com/show/512912/star-favorite-1499.svg" alt="Orders" style="width: 15px; height: 15px; filter: invert(42%) sepia(9%) saturate(473%) hue-rotate(152deg) brightness(94%) contrast(87%);">
+                    <span>Review Pesanan</span>
                 </div>
             </button>
         </div>
     </div>
 
-    <div class="voucher-container">
-        <div class="voucher-container-content">
-            <div class="voucher-area">
+    <div class="review-container">
+        <div class="review-container-content">
+            <div class="review-area">
                 <div class="form-contents">
-                    <div class="voucher-text">
-                        <h1>Beli Voucher</h1>
+                    <div class="review-text">
+                        <h1>Nilai Pesanan</h1>
                     </div>
-                    <form method="POST" action="{% url 'diskon:voucher_purchase' voucher.kode %}">
+                    <form id="review-form" method="post" action="{% url 'pemesanan_jasa:review_order' order_id %}">
                         {% csrf_token %}
                         <div class="form-group mb-3">
-                            <label>Voucher</label>
-                            <div class="selected-voucher" style="padding: 0.6rem 1.2rem; border-radius: 2rem; background-color: #e9f0f1;">
-                                {{ voucher.nama }}
-                            </div>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="metode_bayar">Metode Pembayaran</label>
-                            <select name="metode_bayar" 
-                                   id="metode_bayar" 
+                            <label for="skala_rating">Skala Rating</label>
+                            <select name="skala_rating" 
+                                   id="skala_rating" 
                                    class="w-100"
                                    style="width: 100%; display: flex; justify-content: center; align-items: center; border-radius: 2rem; background-color: #e9f0f1; outline: none; box-shadow: none; appearance: none; padding: 0.6rem 1.2rem; background-image: url('https://www.svgrepo.com/show/522029/chevron-down.svg'); background-repeat: no-repeat; background-position: right 1.2rem center; background-size: 20px;"
                                    required>
-                                <option value="">Pilih Metode Pembayaran</option>
-                                <option value="mypay">MyPay (Saldo: {{ user_balance|currency_format }})</option>
-                                {% for method in payment_methods %}
-                                    {% if method.nama != 'MyPay' %}
-                                        <option value="{{ method.id }}">{{ method.nama }}</option>
-                                    {% endif %}
-                                {% endfor %}
+                                <option value="">Beri rating 1-10</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
                             </select>
                         </div>
+                        <div class="form-group mb-3">
+                            <label for="komentar">Komentar</label>
+                            <textarea name="komentar" 
+                                    id="komentar" 
+                                    class="w-100"
+                                    style="width: 100%; display: flex; justify-content: center; align-items: center; border-radius: 0.5rem; background-color: #e9f0f1; outline: none; box-shadow: none; padding: 1rem; min-height: 150px; resize: vertical;"
+                                    required
+                                    placeholder="Tulis komentar Anda di sini..."></textarea>
+                        </div>
                         <div class="button-row">
-                            <button type="submit" class="submit-order">Beli Voucher</button>
+                            <button type="submit" class="submit-review">Nilai Pesanan</button>
                         </div>
                     </form>
                 </div>
@@ -85,17 +93,18 @@
         outline: none;
     }
 
-    .pemesanan-content {
+    .review-content {
         padding: 20px;
     }
 
-    .voucher-text {
+    .review-text {
         padding: 20px;
         margin-top: 20px;
     }
 
     .navigation-buttons {
         display: flex;
+        margin-top: 20px;
         margin-bottom: 20px;
     }
 
@@ -115,7 +124,7 @@
         gap: 0.5rem;
     }
 
-    .voucher-container {
+    .review-container {
         padding: 15px;
         display: flex;
         flex-direction: column;
@@ -126,12 +135,11 @@
         width: 100%;
     }
 
-    .voucher-container-content {
-        padding: 20px;
+    .review-container-content {
         width: 100%;
     }
 
-    .voucher-area {
+    .review-area {
         width: 100%;
         padding: 20px;
         background-color: #f8f9fa;
@@ -156,7 +164,7 @@
         width: 100%;
     }
 
-    .voucher-text h1 {
+    .review-text h1 {
         font-size: 48px;
         font-weight: bold;
         margin-bottom: 1rem;
@@ -165,12 +173,6 @@
     .form-group {
         width: 100%;
         margin-bottom: 1.5rem;
-    }
-
-    .form-group label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: bold;
     }
 
     .form-group input,
@@ -184,8 +186,23 @@
     }
 
     .form-group input:focus,
-    .form-group select:focus {
+    .form-group select:focus, .form-group textarea:focus {
         background-color: #dde5e6;
+    }
+
+    .form-group textarea {
+        width: 100%;
+        padding: 0.6rem 1.2rem;
+        border-radius: 0.5rem;
+        background-color: #e9f0f1;
+        border: none;
+        outline: none;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: bold;
     }
 
     .button-row {
@@ -194,7 +211,7 @@
         margin-top: 2rem;
     }
 
-    .submit-order {
+    .submit-review {
         padding: 0.6rem 1.2rem;
         border-radius: 2rem;
         background-color: #177E89;
@@ -204,45 +221,23 @@
         font-size: 1.1rem;
     }
 
-    .submit-order:hover {
+    .submit-review:hover {
         background-color: #084c61;
-    }
-
-    /* Style for select placeholder */
-    :root {
-        --placeholder-color: #6c757d;
-    }
-
-    select {
-        color: #323031;
-    }
-
-    select option {
-        color: #323031;
-    }
-
-    select option:first-child {
-        color: var(--placeholder-color);
-    }
-
-    select:invalid,
-    select option[value=""] {
-        color: var(--placeholder-color);
-    }
-
-    select option:not([value=""]) {
-        color: #323031;
     }
 </style>
 
 {% block script %}
 <script>
+    // Only show messages if we're not coming from the orders page
+    const fromOrdersPage = document.referrer.includes('orders');
     {% if messages %}
         {% for message in messages %}
-            alert("{{ message }}");
-            {% if message.tags == 'success' %}
-                window.location.href = '{% url "diskon:show_discount_page" %}';
-            {% endif %}
+            if (!fromOrdersPage) {
+                alert("{{ message }}");
+                {% if message.tags == 'success' %}
+                    window.location.href = '{% url "pemesanan_jasa:show_my_orders" %}';
+                {% endif %}
+            }
         {% endfor %}
     {% endif %}
 </script>

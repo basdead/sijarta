@@ -63,27 +63,46 @@ def profile(request, username):
         # Get additional info based on user type
         if viewed_user_type == 'pekerja':
             # First get pekerja data
-            cursor.execute(
-                'SELECT namabank, nomorrekening, npwp, LinkFoto, rating '
-                'FROM PEKERJA WHERE id = %s', (profile_user_id,)
-            )
-            pekerja_data = cursor.fetchone()
-            
-            # Then calculate completed orders count
-            cursor.execute("""
-                SELECT COUNT(DISTINCT pj.Id)
-                FROM TR_PEMESANAN_JASA pj
-                JOIN TR_PEMESANAN_STATUS tps ON pj.Id = tps.IdTrPemesanan
-                JOIN STATUS_PEMESANAN sp ON tps.IdStatus = sp.Id
-                WHERE pj.IdPekerja = %s
-                AND sp.Status = 'Pesanan selesai'
-                AND tps.TglWaktu = (
-                    SELECT MAX(TglWaktu)
-                    FROM TR_PEMESANAN_STATUS
-                    WHERE IdTrPemesanan = pj.Id
+            cursor.execute('''
+                WITH TestimoniStats AS (
+                    SELECT 
+                        tpj.idpekerja,
+                        COUNT(t.rating) as total_reviews,
+                        COALESCE(AVG(CAST(t.rating AS FLOAT)), 0.0) as avg_rating
+                    FROM tr_pemesanan_jasa tpj
+                    LEFT JOIN testimoni t ON t.idtrpemesanan = tpj.id
+                    WHERE tpj.idpekerja = %s
+                    GROUP BY tpj.idpekerja
+                ),
+                CompletedOrders AS (
+                    SELECT 
+                        tpj.idpekerja,
+                        COUNT(DISTINCT tpj.id) as completed_count
+                    FROM tr_pemesanan_jasa tpj
+                    JOIN tr_pemesanan_status tps ON tpj.id = tps.idtrpemesanan
+                    JOIN status_pemesanan sp ON tps.idstatus = sp.id
+                    WHERE tpj.idpekerja = %s
+                    AND sp.status = 'Pesanan selesai'
+                    AND tps.tglwaktu = (
+                        SELECT MAX(tglwaktu)
+                        FROM tr_pemesanan_status
+                        WHERE idtrpemesanan = tpj.id
+                    )
+                    GROUP BY tpj.idpekerja
                 )
-            """, [profile_user_id])
-            completed_orders = cursor.fetchone()[0]
+                SELECT 
+                    p.namabank,
+                    p.nomorrekening,
+                    p.npwp,
+                    p.linkfoto,
+                    ts.avg_rating as rating,
+                    COALESCE(co.completed_count, 0) as completed_orders
+                FROM pekerja p
+                LEFT JOIN TestimoniStats ts ON ts.idpekerja = p.id
+                LEFT JOIN CompletedOrders co ON co.idpekerja = p.id
+                WHERE p.id = %s
+            ''', [profile_user_id, profile_user_id, profile_user_id])
+            pekerja_data = cursor.fetchone()
             
             if pekerja_data:
                 additional_attributes.update({
@@ -91,7 +110,7 @@ def profile(request, username):
                     'no_rekening': pekerja_data[1],
                     'npwp': pekerja_data[2],
                     'rating': pekerja_data[4],
-                    'jumlah_pesanan_selesai': completed_orders
+                    'jumlah_pesanan_selesai': pekerja_data[5]
                 })
                 profile_data['foto_url'] = pekerja_data[3]  # LinkFoto from PEKERJA table
                 form = PekerjaForm(initial=form_data)
